@@ -1,0 +1,18 @@
+# Build Folders
+artifacts/
+bin/
+obj/
+
+# NuGet-related
+packages
+nuget.exe
+
+# User Settings
+*.suo
+*.user
+
+# Generated Files
+src/Shared/VersionInfo.cs
+
+# Other
+_ReSharper.InfinityMQ

@@ -1,0 +1,38 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Test">
+
+  <Import Project="..\lib\MSBuild\MSBuild.Community.Tasks\MSBuild.Community.Tasks.Targets"/>
+
+  <PropertyGroup>
+    <BuildOutput>..\artifacts</BuildOutput>
+    <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <BuildVersion Condition="'$(BuildVersion)' == ''">0.0.0.0</BuildVersion>
+    <MSpecOptions Condition="'$(MSpecOptions)' == ''"></MSpecOptions>
+  </PropertyGroup>
+
+  <Target Name="Clean">
+    <ItemGroup>
+      <CleanFiles Include="$(BuildOutput)" />
+      <CleanFiles Include="**\bin\$(Configuration)\**" />
+      <CleanFiles Include="**\bin\*.*" />
+      <CleanFiles Include="**\obj\$(Configuration)\**" />
+      <CleanFiles Include="**\obj\*.*" />
+    </ItemGroup>
+
+    <Delete Files="@(CleanFiles)" />
+  </Target>
+
+  <Target Name="Initialize" DependsOnTargets="Clean">
+    <MakeDir Directories="$(BuildOutput)" />
+    <AssemblyInfo CodeLanguage="CS" OutputFile="Shared\VersionInfo.cs" AssemblyVersion="$(BuildVersion)" AssemblyFileVersion="$(BuildVersion)" AssemblyConfiguration="$(Configuration)" />
+  </Target>
+
+  <Target Name="Build" DependsOnTargets="Initialize">
+    <MSBuild Projects="InfinityMQ.sln" Targets="Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+  </Target>
+
+  <Target Name="Test" DependsOnTargets="Build">
+    <!-- Placeholder -->
+  </Target>
+
+</Project>
