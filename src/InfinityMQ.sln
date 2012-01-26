@@ -11,6 +11,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{885B67
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Settings", "Settings", "{00C89D52-0341-48F1-80A5-AE5C19CB92E3}"
+	ProjectSection(SolutionItems) = preProject
+		Indentation.vssettings = Indentation.vssettings
+		Settings.StyleCop = Settings.StyleCop
+		SolutionEvents_Opened.macro = SolutionEvents_Opened.macro
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
