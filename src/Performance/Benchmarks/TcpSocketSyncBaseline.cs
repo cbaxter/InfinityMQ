@@ -40,8 +40,8 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void ReceiveMessage()
         {
-            CaptureServerBytesReceived(channelSocket.Send(new Byte[MessageSize]));
-            channelSocket.Receive(new Byte[MessageSize]);
+            CaptureServerBytesReceived(channelSocket.Receive(new Byte[MessageSize]));
+            channelSocket.Send(new Byte[MessageSize]);
         }
 
         protected override void TeardownClient()
