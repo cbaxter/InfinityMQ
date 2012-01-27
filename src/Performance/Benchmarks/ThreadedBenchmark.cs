@@ -101,14 +101,6 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void SendMessage();
 
-        protected void CaptureClientBytesReceived(Int32 bytesReceived)
-        {
-            ByteCounter.CaptureClientBytesReceived(bytesReceived);
-
-            if (ByteCounter.AllClientBytesReceived)
-                SignalClientReady();
-        }
-
         protected abstract void TeardownClient();
 
         #endregion
@@ -139,15 +131,7 @@ namespace InfinityMQ.Performance.Benchmarks
         }
 
         protected abstract void ReceiveMessage();
-
-        protected void CaptureServerBytesReceived(Int32 bytesReceived)
-        {
-            ByteCounter.CaptureServerBytesReceived(bytesReceived);
-
-            if (ByteCounter.AllServerBytesReceived)
-                SignalServerReady();
-        }
-
+        
         protected abstract void TeardownServer();
 
         #endregion

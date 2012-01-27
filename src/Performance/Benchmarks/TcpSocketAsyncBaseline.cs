@@ -66,7 +66,9 @@ namespace InfinityMQ.Performance.Benchmarks
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      CaptureClientBytesReceived(e.BytesTransferred);
+                                      ByteCounter.CaptureClientBytesReceived(e.BytesTransferred);
+                                      if (ByteCounter.AllClientBytesReceived)
+                                          SignalClientReady();
 
                                       e.Dispose();
                                   };
@@ -89,9 +91,12 @@ namespace InfinityMQ.Performance.Benchmarks
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      CaptureServerBytesReceived(e.BytesTransferred);
+                                      ByteCounter.CaptureServerBytesReceived(e.BytesTransferred);
 
                                       SendAsyncServerMessage();
+                                      
+                                      if (ByteCounter.AllServerBytesReceived)
+                                          SignalServerReady();
 
                                       e.Dispose();
                                   };

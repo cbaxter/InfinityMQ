@@ -32,13 +32,20 @@ namespace InfinityMQ.Performance.Benchmarks
         protected override void SendMessage()
         {
             clientStream.Write(new Byte[MessageSize], 0, MessageSize);
-            CaptureClientBytesReceived(clientStream.Read(new Byte[MessageSize], 0, MessageSize));
+            
+            ByteCounter.CaptureClientBytesReceived(clientStream.Read(new Byte[MessageSize], 0, MessageSize));
+            if (ByteCounter.AllClientBytesReceived)
+                SignalClientReady();
         }
 
         protected override void ReceiveMessage()
         {
-            CaptureServerBytesReceived(serverStream.Read(new Byte[MessageSize], 0, MessageSize));
+            ByteCounter.CaptureServerBytesReceived(serverStream.Read(new Byte[MessageSize], 0, MessageSize));
+
             serverStream.Write(new Byte[MessageSize], 0, MessageSize);
+
+            if (ByteCounter.AllServerBytesReceived)
+                SignalServerReady();
         }
 
         protected override void TeardownClient()
