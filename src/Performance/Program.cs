@@ -9,11 +9,11 @@ namespace InfinityMQ.Performance
     {
         public static void Main()
         {
+            var benchmarkGroups = GetBenchmarks().ToList();
+            var maxNameLength = benchmarkGroups.SelectMany(group => group).Select(group => group.Name.Length).Max();
             var messageSize = ReadInteger("Enter Message Size (Bytes):\t");
             var messageCount = ReadInteger("Enter Message Count:\t\t");
 
-            var benchmarkGroups = GetBenchmarks().ToList();
-            var maxNameLength = benchmarkGroups.SelectMany(group => group).Select(group => group.Name.Length).Max();
             foreach (var benchmarkGroup in benchmarkGroups)
             {
                 Console.WriteLine();
@@ -62,7 +62,7 @@ namespace InfinityMQ.Performance
             do
             {
                 Console.Write(prompt);
-            } while (!Int32.TryParse(Console.ReadLine(), out result) || result == 0);
+            } while (!Int32.TryParse(Console.ReadLine(), out result) || result <= 0);
 
             return result;
         }
