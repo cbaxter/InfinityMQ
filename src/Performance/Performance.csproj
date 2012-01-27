@@ -49,6 +49,7 @@
     <Compile Include="..\Shared\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Benchmarks\ByteCounter.cs" />
     <Compile Include="Benchmarks\Metrics.cs" />
     <Compile Include="Benchmarks\TcpSocketAsyncBaseline.cs" />
     <Compile Include="Benchmarks\TcpSocketSyncBaseline.cs" />

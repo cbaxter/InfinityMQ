@@ -11,12 +11,15 @@ namespace InfinityMQ.Performance.Benchmarks
         private readonly ManualResetEvent serverEvent = new ManualResetEvent(false);
         private readonly Stopwatch throughputStopwatch = new Stopwatch();
         private readonly Stopwatch latencyStopwatch = new Stopwatch();
-        private Int32 totalClientBytesReceived;
-        private Int32 totalServerBytesReceived;
-
+        private Int64 clientBytesReceived;
+        private Int64 serverBytesReceived;
+        private Int64 clientBytesSent;
+        private Int64 serverBytesSent;
+       
         public String Name { get; private set; }
         public String Group { get; private set; }
         public Metrics Metrics { get; private set; }
+        public ByteCounter ByteCounter { get; private set; }
         protected Int32 MessageSize { get { return Metrics.MessageSize; } }
         protected Int32 MessageCount { get { return Metrics.MessageCount; } }
 
@@ -47,6 +50,7 @@ namespace InfinityMQ.Performance.Benchmarks
         public Metrics Run(Int32 messageCount, Int32 messageSize)
         {
             Metrics = new Metrics(messageCount, messageSize);
+            ByteCounter = new ByteCounter(messageCount * messageSize);
 
             var clientTask = Task.Factory.StartNew(() =>
                                                     {
@@ -97,16 +101,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void SendMessage();
 
-        protected Boolean CaptureClientBytesReceived(Int32 count)
+        protected void CaptureClientBytesReceived(Int32 bytesReceived)
         {
-            var totalBytes = Interlocked.Increment(ref this.totalClientBytesReceived);
-            if (totalBytes == MessageSize * MessageCount)
-            {
-                SignalClientReady();
-                return false;
-            }
+            ByteCounter.CaptureClientBytesReceived(bytesReceived);
 
-            return true;
+            if (ByteCounter.AllClientBytesReceived)
+                SignalClientReady();
         }
 
         protected abstract void TeardownClient();
@@ -140,16 +140,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void ReceiveMessage();
 
-        protected Boolean CaptureServerBytesReceived(Int32 count)
+        protected void CaptureServerBytesReceived(Int32 bytesReceived)
         {
-            var totalBytes = Interlocked.Increment(ref this.totalServerBytesReceived);
-            if (totalBytes == MessageSize * MessageCount)
-            {
-                SignalServerReady();
-                return false;
-            }
+            ByteCounter.CaptureServerBytesReceived(bytesReceived);
 
-            return true;
+            if (ByteCounter.AllServerBytesReceived)
+                SignalServerReady();
         }
 
         protected abstract void TeardownServer();

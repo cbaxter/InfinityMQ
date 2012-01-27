@@ -4,6 +4,7 @@ using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
+    //TODO: Implement SocketAsyncEventArgs pool.
     internal class TcpSocketAsyncBaseline : ThreadedBenchmark
     {
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
@@ -39,35 +40,38 @@ namespace InfinityMQ.Performance.Benchmarks
 
         private void SendAsyncClientMessage()
         {
+            if (ByteCounter.AllClientBytesSent)
+                return;
+
             var args = new SocketAsyncEventArgs();
 
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      ReceiveAsyncClientMessage(); 
+                                      ReceiveAsyncClientMessage();
+
                                       e.Dispose();
                                   };
 
-            clientSocket.SendAsync(args);
+            IgnoreDirtySocketShutdown(() => clientSocket.SendAsync(args));
         }
 
         private void ReceiveAsyncClientMessage()
         {
+            if (ByteCounter.AllClientBytesReceived)
+                return;
+
             var args = new SocketAsyncEventArgs();
 
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      var moreBytesExpected = CaptureClientBytesReceived(e.BytesTransferred);
-                                      if (!moreBytesExpected)
-                                          return;
+                                      CaptureClientBytesReceived(e.BytesTransferred);
 
-                                      SendAsyncClientMessage(); 
                                       e.Dispose();
                                   };
 
-
-            clientSocket.ReceiveAsync(args);
+            IgnoreDirtySocketShutdown(() => clientSocket.ReceiveAsync(args));
         }
 
         protected override void ReceiveMessage()
@@ -77,34 +81,40 @@ namespace InfinityMQ.Performance.Benchmarks
 
         private void ReceiveAsyncServerMessage()
         {
+            if (ByteCounter.AllServerBytesReceived)
+                return;
+
             var args = new SocketAsyncEventArgs();
 
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      ReceiveAsyncServerMessage();
+                                      CaptureServerBytesReceived(e.BytesTransferred);
+
+                                      SendAsyncServerMessage();
+
                                       e.Dispose();
                                   };
 
-            channelSocket.ReceiveAsync(args);
+            IgnoreDirtySocketShutdown(() => channelSocket.ReceiveAsync(args));
         }
 
         private void SendAsyncServerMessage()
         {
+            if (ByteCounter.AllServerBytesSent)
+                return;
+
             var args = new SocketAsyncEventArgs();
 
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
             args.Completed += (sender, e) =>
                                   {
-                                      var moreBytesExpected = CaptureClientBytesReceived(e.BytesTransferred);
-                                      if (!moreBytesExpected)
-                                          return;
+                                      ReceiveAsyncClientMessage();
 
-                                      SendAsyncServerMessage();
                                       e.Dispose();
                                   };
 
-            channelSocket.SendAsync(args);
+            IgnoreDirtySocketShutdown(() => channelSocket.SendAsync(args));
         }
 
         protected override void TeardownClient()
@@ -129,6 +139,16 @@ namespace InfinityMQ.Performance.Benchmarks
 
             if (channelSocket != null)
                 channelSocket.Dispose();
+        }
+
+        private void IgnoreDirtySocketShutdown(Action action)
+        {
+            try
+            {
+                action.Invoke();
+            }
+            catch (ObjectDisposedException)
+            { }
         }
     }
 }
