@@ -91,11 +91,16 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void SendMessage();
 
-        protected void CaptureClientBytesReceived(Int32 count)
+        protected Boolean CaptureClientBytesReceived(Int32 count)
         {
             var totalBytes = Interlocked.Increment(ref this.totalClientBytesReceived);
-            if(totalBytes == MessageSize * MessageCount)
+            if (totalBytes == MessageSize * MessageCount)
+            {
                 this.clientEvent.Set();
+                return false;
+            }
+
+            return true;
         }
 
         protected abstract void TeardownClient();
@@ -125,11 +130,16 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void ReceiveMessage();
 
-        protected void CaptureServerBytesReceived(Int32 count)
+        protected Boolean CaptureServerBytesReceived(Int32 count)
         {
             var totalBytes = Interlocked.Increment(ref this.totalServerBytesReceived);
             if (totalBytes == MessageSize * MessageCount)
+            {
                 this.serverEvent.Set();
+                return false;
+            }
+
+            return true;
         }
 
         protected abstract void TeardownServer();

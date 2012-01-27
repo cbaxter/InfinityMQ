@@ -41,8 +41,12 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             var args = new SocketAsyncEventArgs();
 
-            args.Completed += (sender, e) => { ReceiveAsyncClientMessage(); e.Dispose(); };
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+            args.Completed += (sender, e) =>
+                                  {
+                                      ReceiveAsyncClientMessage(); 
+                                      e.Dispose();
+                                  };
 
             clientSocket.SendAsync(args);
         }
@@ -51,8 +55,17 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             var args = new SocketAsyncEventArgs();
 
-            args.Completed += (sender, e) => { CaptureClientBytesReceived(e.BytesTransferred); SendAsyncClientMessage(); e.Dispose(); };
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+            args.Completed += (sender, e) =>
+                                  {
+                                      var moreBytesExpected = CaptureClientBytesReceived(e.BytesTransferred);
+                                      if (!moreBytesExpected)
+                                          return;
+
+                                      SendAsyncClientMessage(); 
+                                      e.Dispose();
+                                  };
+
 
             clientSocket.ReceiveAsync(args);
         }
@@ -66,8 +79,12 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             var args = new SocketAsyncEventArgs();
 
-            args.Completed += (sender, e) => ReceiveAsyncServerMessage();
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+            args.Completed += (sender, e) =>
+                                  {
+                                      ReceiveAsyncServerMessage();
+                                      e.Dispose();
+                                  };
 
             channelSocket.ReceiveAsync(args);
         }
@@ -76,8 +93,16 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             var args = new SocketAsyncEventArgs();
 
-            args.Completed += (sender, e) => { CaptureServerBytesReceived(e.BytesTransferred); SendAsyncServerMessage(); };
             args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+            args.Completed += (sender, e) =>
+                                  {
+                                      var moreBytesExpected = CaptureClientBytesReceived(e.BytesTransferred);
+                                      if (!moreBytesExpected)
+                                          return;
+
+                                      SendAsyncServerMessage();
+                                      e.Dispose();
+                                  };
 
             channelSocket.SendAsync(args);
         }

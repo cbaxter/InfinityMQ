@@ -8,7 +8,7 @@ namespace InfinityMQ.Performance
     public static class Program
     {
         private const Int32 MessageSize = 1024; //TODO: Randomize.
-        private const Int32 MessageCount = 10000; //TODO: Configure.
+        private const Int32 MessageCount = 100000; //TODO: Configure.
 
         public static void Main()
         {
