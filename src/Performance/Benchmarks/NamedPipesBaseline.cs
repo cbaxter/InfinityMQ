@@ -24,7 +24,7 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
 
-            SignalClient();
+            SignalServerReady();
 
             serverStream.WaitForConnection();
         }

@@ -28,11 +28,12 @@ namespace InfinityMQ.Performance
                     benchmark.MessageCount = MessageCount;
                     benchmark.MessageSize = MessageSize;
 
-                    benchmark.Run();
+                    Console.Write("{0} --> ", benchmark.Name.PadRight(maxNameLength, ' '));
 
+                    benchmark.Run();
+                    
                     Console.WriteLine(
-                        "{0} --> Message Latency = {1} [us]; Message Throughput = {2} [msg/s]; Data Throughput = {3} [Mb/s];",
-                        benchmark.Name.PadRight(maxNameLength, ' '),
+                        "Message Latency = {0} [us]; Message Throughput = {1} [msg/s]; Data Throughput = {2} [Mb/s];",
                         benchmark.MessageLatency.ToString("F2").PadLeft(10, ' '),
                         benchmark.MessageThroughput.ToString("F2").PadLeft(10, ' '),
                         benchmark.DataThroughput.ToString("F2").PadLeft(10, ' ')

@@ -27,7 +27,7 @@ namespace InfinityMQ.Performance.Benchmarks
             serverSocket.Bind(EndPoint);
             serverSocket.Listen(1);
 
-            SignalClient();
+            SignalServerReady();
 
             channelSocket = serverSocket.Accept();
         }

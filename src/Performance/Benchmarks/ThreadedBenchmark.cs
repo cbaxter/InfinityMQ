@@ -50,9 +50,9 @@ namespace InfinityMQ.Performance.Benchmarks
         {
             var clientTask = Task.Factory.StartNew(() =>
                                                     {
-                                                        this.serverEvent.WaitOne();
+                                                        WaitOnServer();
                                                         SetupClient();
-                                                        SignalServer();
+                                                        SignalClientReady();
                                                         SendMessages();
                                                         TeardownClient();
                                                     });
@@ -60,8 +60,8 @@ namespace InfinityMQ.Performance.Benchmarks
             var serverTask = Task.Factory.StartNew(() =>
                                                     {
                                                         SetupServer();
-                                                        SignalClient();
-                                                        this.clientEvent.WaitOne();
+                                                        SignalServerReady();
+                                                        WaitOnClient();
                                                         ReceiveMessages();
                                                         TeardownServer();
                                                     });
@@ -73,17 +73,21 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void SetupClient();
 
-        protected void SignalServer()
+        protected void SignalClientReady()
         {
             this.clientEvent.Set();
         }
 
+        protected void WaitOnClient()
+        {
+            this.clientEvent.WaitOne();
+        }
         protected virtual void SendMessages()
         {
             this.latencyStopwatch.Start();
             for (var i = 0; i < MessageCount; i++)
                 SendMessage();
-            this.clientEvent.WaitOne();
+            WaitOnClient();
             this.latencyStopwatch.Stop();
 
             MessageLatency = this.latencyStopwatch.ElapsedTicks / (Decimal)MessageCount / 2M * 1000000M / Stopwatch.Frequency;
@@ -96,7 +100,7 @@ namespace InfinityMQ.Performance.Benchmarks
             var totalBytes = Interlocked.Increment(ref this.totalClientBytesReceived);
             if (totalBytes == MessageSize * MessageCount)
             {
-                this.clientEvent.Set();
+                SignalClientReady();
                 return false;
             }
 
@@ -111,9 +115,14 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected abstract void SetupServer();
 
-        protected void SignalClient()
+        protected void SignalServerReady()
         {
             this.serverEvent.Set();
+        }
+
+        protected void WaitOnServer()
+        {
+            this.serverEvent.WaitOne();
         }
 
         protected virtual void ReceiveMessages()
@@ -121,11 +130,11 @@ namespace InfinityMQ.Performance.Benchmarks
             this.throughputStopwatch.Start();
             for (var i = 0; i < MessageCount; i++)
                 ReceiveMessage();
-            this.serverEvent.WaitOne();
+            WaitOnServer();
             this.throughputStopwatch.Stop();
 
             MessageThroughput = (Decimal)MessageCount * Stopwatch.Frequency / this.throughputStopwatch.ElapsedTicks;
-            DataThroughput = MessageThroughput*MessageSize*8/1000000;
+            DataThroughput = MessageThroughput * MessageSize * 8 / 1000000;
         }
 
         protected abstract void ReceiveMessage();
@@ -135,7 +144,7 @@ namespace InfinityMQ.Performance.Benchmarks
             var totalBytes = Interlocked.Increment(ref this.totalServerBytesReceived);
             if (totalBytes == MessageSize * MessageCount)
             {
-                this.serverEvent.Set();
+                SignalServerReady();
                 return false;
             }
 
