@@ -1,0 +1,65 @@
+﻿using System;
+using System.IO.Pipes;
+
+namespace InfinityMQ.Performance.Benchmarks
+{
+    internal class NamedPipesBaseline : ThreadedBenchmark
+    {
+        private const String ServerName = ".";
+        private const String PipeName = "InfinityMQ.Benchmark.NamedPipe";
+        private NamedPipeServerStream serverStream;
+        private NamedPipeClientStream clientStream;
+
+        public NamedPipesBaseline()
+            : base("Named Pipes", "Baseline")
+        { }
+
+        protected override void SetupClient()
+        {
+            clientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
+            clientStream.Connect();
+        }
+
+        protected override void SetupServer()
+        {
+            serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
+
+            SignalClient();
+
+            serverStream.WaitForConnection();
+        }
+
+        protected override void SendMessage()
+        {
+            clientStream.Write(new Byte[MessageSize], 0, MessageSize);
+            CaptureClientBytesReceived(clientStream.Read(new Byte[MessageSize], 0, MessageSize));
+        }
+
+        protected override void ReceiveMessage()
+        {
+            CaptureServerBytesReceived(serverStream.Read(new Byte[MessageSize], 0, MessageSize));
+            serverStream.Write(new Byte[MessageSize], 0, MessageSize);
+        }
+
+        protected override void TeardownClient()
+        {
+            clientStream.WaitForPipeDrain();
+        }
+
+        protected override void TeardownServer()
+        {
+            serverStream.WaitForPipeDrain();
+        }
+
+        protected override void Dispose(Boolean disposing)
+        {
+            base.Dispose(disposing);
+
+            if (serverStream != null)
+                serverStream.Dispose();
+
+            if (clientStream != null)
+                clientStream.Dispose();
+        }
+    }
+}
