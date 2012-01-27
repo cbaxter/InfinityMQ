@@ -22,19 +22,8 @@ namespace InfinityMQ.Performance
 
                 foreach (var benchmark in benchmarkGroup)
                 {
-                    benchmark.MessageCount = messageCount;
-                    benchmark.MessageSize = messageSize;
-
                     Console.Write("{0} --> ", benchmark.Name.PadRight(maxNameLength, ' '));
-
-                    benchmark.Run();
-
-                    Console.WriteLine(
-                        "Message Latency = {0} [us]; Message Throughput = {1} [msg/s]; Data Throughput = {2} [Mb/s];",
-                        benchmark.MessageLatency.ToString("F2").PadLeft(10, ' '),
-                        benchmark.MessageThroughput.ToString("F2").PadLeft(10, ' '),
-                        benchmark.DataThroughput.ToString("F2").PadLeft(10, ' ')
-                    );
+                    Console.WriteLine(benchmark.Run(messageCount, messageSize));
 
                     benchmark.Dispose();
                 }

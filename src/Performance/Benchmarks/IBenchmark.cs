@@ -6,13 +6,8 @@ namespace InfinityMQ.Performance.Benchmarks
     {
         String Name { get; }
         String Group { get; }
-        Decimal DataThroughput { get; }
-        Decimal MessageLatency { get; }
-        Decimal MessageThroughput { get; }
+        Metrics Metrics { get; }
 
-        Int32 MessageSize { get; set; }
-        Int32 MessageCount { get; set; }
-
-        void Run();
+        Metrics Run(Int32 messageCount, Int32 messageSize);
     }
 }

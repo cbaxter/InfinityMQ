@@ -16,11 +16,9 @@ namespace InfinityMQ.Performance.Benchmarks
 
         public String Name { get; private set; }
         public String Group { get; private set; }
-        public Int32 MessageSize { get; set; }
-        public Int32 MessageCount { get; set; }
-        public Decimal DataThroughput { get; private set; }
-        public Decimal MessageLatency { get; private set; }
-        public Decimal MessageThroughput { get; private set; }
+        public Metrics Metrics { get; private set; }
+        protected Int32 MessageSize { get { return Metrics.MessageSize; } }
+        protected Int32 MessageCount { get { return Metrics.MessageCount; } }
 
         protected ThreadedBenchmark(String group, String name)
         {
@@ -46,8 +44,10 @@ namespace InfinityMQ.Performance.Benchmarks
                 this.serverEvent.Dispose();
         }
 
-        public void Run()
+        public Metrics Run(Int32 messageCount, Int32 messageSize)
         {
+            Metrics = new Metrics(messageCount, messageSize);
+
             var clientTask = Task.Factory.StartNew(() =>
                                                     {
                                                         WaitOnServer();
@@ -67,6 +67,8 @@ namespace InfinityMQ.Performance.Benchmarks
                                                     });
 
             Task.WaitAll(clientTask, serverTask);
+
+            return Metrics;
         }
 
         #region Client Methods
@@ -90,7 +92,7 @@ namespace InfinityMQ.Performance.Benchmarks
             WaitOnClient();
             this.latencyStopwatch.Stop();
 
-            MessageLatency = this.latencyStopwatch.ElapsedTicks / (Decimal)MessageCount / 2M * 1000000M / Stopwatch.Frequency;
+            Metrics.CalculateLatency(this.throughputStopwatch.ElapsedTicks);
         }
 
         protected abstract void SendMessage();
@@ -133,8 +135,7 @@ namespace InfinityMQ.Performance.Benchmarks
             WaitOnServer();
             this.throughputStopwatch.Stop();
 
-            MessageThroughput = (Decimal)MessageCount * Stopwatch.Frequency / this.throughputStopwatch.ElapsedTicks;
-            DataThroughput = MessageThroughput * MessageSize * 8 / 1000000;
+            Metrics.CalculateThroughput(this.throughputStopwatch.ElapsedTicks);
         }
 
         protected abstract void ReceiveMessage();
