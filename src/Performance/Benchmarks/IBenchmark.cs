@@ -6,7 +6,6 @@ namespace InfinityMQ.Performance.Benchmarks
     {
         String Name { get; }
         String Group { get; }
-        Metrics Metrics { get; }
 
         Metrics Run(Int32 messageCount, Int32 messageSize);
     }

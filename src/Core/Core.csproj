@@ -45,7 +45,10 @@
     <Compile Include="..\Shared\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="DisposableExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="BufferExtensions.cs" />
+    <Compile Include="StreamExtensions.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

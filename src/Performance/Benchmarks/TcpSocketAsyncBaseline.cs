@@ -4,146 +4,124 @@ using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    //TODO: Implement SocketAsyncEventArgs pool.
     internal class TcpSocketAsyncBaseline : ThreadedBenchmark
     {
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
+        private PrimitiveObjectPool<SocketAsyncEventArgs> receiveArgsPool;
+        private PrimitiveObjectPool<SocketAsyncEventArgs> sendArgsPool;
+        private Counter receivedBytesCount;
+        private Counter sentBytesCount;
         private Socket serverSocket;
         private Socket clientSocket;
         private Socket channelSocket;
 
         public TcpSocketAsyncBaseline()
-            : base("TCP/IP", "Baseline (Asynchronous)")
+            : base("TCP/IP", "PUB/SUB Baseline")
         { }
-
-        protected override void SetupClient()
-        {
-            clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            clientSocket.Connect(EndPoint);
-        }
-
-        protected override void SetupServer()
-        {
-            serverSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            serverSocket.Bind(EndPoint);
-            serverSocket.Listen(1);
-
-            SignalServerReady();
-
-            channelSocket = serverSocket.Accept();
-        }
-
-        protected override void SendMessage()
-        {
-            SendAsyncClientMessage();
-        }
-
-        private void SendAsyncClientMessage()
-        {
-            if (ByteCounter.AllClientBytesSent)
-                return;
-
-            var args = new SocketAsyncEventArgs();
-
-            args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
-            args.Completed += (sender, e) =>
-                                  {
-                                      ReceiveAsyncClientMessage();
-
-                                      e.Dispose();
-                                  };
-
-            IgnoreDirtySocketShutdown(() => clientSocket.SendAsync(args));
-        }
-
-        private void ReceiveAsyncClientMessage()
-        {
-            if (ByteCounter.AllClientBytesReceived)
-                return;
-
-            var args = new SocketAsyncEventArgs();
-
-            args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
-            args.Completed += (sender, e) =>
-                                  {
-                                      ByteCounter.CaptureClientBytesReceived(e.BytesTransferred);
-                                      if (ByteCounter.AllClientBytesReceived)
-                                          SignalClientReady();
-
-                                      e.Dispose();
-                                  };
-
-            IgnoreDirtySocketShutdown(() => clientSocket.ReceiveAsync(args));
-        }
-
-        protected override void ReceiveMessage()
-        {
-            ReceiveAsyncServerMessage();
-        }
-
-        private void ReceiveAsyncServerMessage()
-        {
-            if (ByteCounter.AllServerBytesReceived)
-                return;
-
-            var args = new SocketAsyncEventArgs();
-
-            args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
-            args.Completed += (sender, e) =>
-                                  {
-                                      ByteCounter.CaptureServerBytesReceived(e.BytesTransferred);
-
-                                      SendAsyncServerMessage();
-                                      
-                                      if (ByteCounter.AllServerBytesReceived)
-                                          SignalServerReady();
-
-                                      e.Dispose();
-                                  };
-
-            IgnoreDirtySocketShutdown(() => channelSocket.ReceiveAsync(args));
-        }
-
-        private void SendAsyncServerMessage()
-        {
-            if (ByteCounter.AllServerBytesSent)
-                return;
-
-            var args = new SocketAsyncEventArgs();
-
-            args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
-            args.Completed += (sender, e) =>
-                                  {
-                                      ReceiveAsyncClientMessage();
-
-                                      e.Dispose();
-                                  };
-
-            IgnoreDirtySocketShutdown(() => channelSocket.SendAsync(args));
-        }
-
-        protected override void TeardownClient()
-        {
-            clientSocket.Shutdown(SocketShutdown.Both);
-        }
-
-        protected override void TeardownServer()
-        {
-            channelSocket.Shutdown(SocketShutdown.Both);
-        }
 
         protected override void Dispose(Boolean disposing)
         {
             base.Dispose(disposing);
 
-            if (clientSocket != null)
-                clientSocket.Dispose();
+            this.clientSocket.DisposeIfSet();
+            this.serverSocket.DisposeIfSet();
+            this.channelSocket.DisposeIfSet();
+            this.sendArgsPool.DisposeIfSet();
+            this.receiveArgsPool.DisposeIfSet();
+            this.sentBytesCount.DisposeIfSet();
+            this.receivedBytesCount.DisposeIfSet();
+        }
 
-            if (serverSocket != null)
-                serverSocket.Dispose();
+        protected override void SetupClient()
+        {
+            this.sendArgsPool = PrimitiveObjectPool.Create(100, CreateSendAsyncEventArgs);
+            this.sentBytesCount = new Counter(MessageSize * MessageCount);
+            this.clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.clientSocket.Connect(EndPoint);
+        }
 
-            if (channelSocket != null)
-                channelSocket.Dispose();
+        private SocketAsyncEventArgs CreateSendAsyncEventArgs()
+        {
+            var args = new SocketAsyncEventArgs();
+
+            args.Completed += (sender, e) =>
+                                  {
+                                      this.sentBytesCount.Add(e.BytesTransferred);
+                                      this.sendArgsPool.Release(e);
+                                  };
+
+            return args;
+        }
+
+        protected override void SendMessages()
+        {
+            for (var i = 0; i < MessageCount; i++)
+            {
+                var args = this.sendArgsPool.WaitOne();
+
+                args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+
+                this.clientSocket.SendAsync(args);
+            }
+
+            this.sentBytesCount.WaitForCount();
+        }
+
+        protected override void TeardownClient()
+        {
+            this.clientSocket.Shutdown(SocketShutdown.Both);
+        }
+
+        protected override void SetupServer()
+        {
+            this.receivedBytesCount = new Counter(MessageSize * MessageCount);
+            this.receiveArgsPool = PrimitiveObjectPool.Create(100, CreateReceiveAsyncEventArgs);
+            this.serverSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.serverSocket.Bind(EndPoint);
+            this.serverSocket.Listen(1);
+        }
+
+        private SocketAsyncEventArgs CreateReceiveAsyncEventArgs()
+        {
+            var args = new SocketAsyncEventArgs();
+
+            args.Completed += (sender, e) =>
+                                  {
+                                      this.receivedBytesCount.Add(e.BytesTransferred);
+
+                                      if (!this.receivedBytesCount.CountReached)
+                                          ReceiveMessage();
+
+                                      this.receiveArgsPool.Release(e);
+                                  };
+
+            return args;
+        }
+
+        protected override void WaitForClient()
+        {
+            this.channelSocket = this.serverSocket.Accept();
+        }
+
+        protected override void ReceiveMessages()
+        {
+            ReceiveMessage();
+
+            this.receivedBytesCount.WaitForCount();
+        }
+
+        private void ReceiveMessage()
+        {
+            var args = this.receiveArgsPool.WaitOne();
+
+            args.SetBuffer(new Byte[MessageSize], 0, MessageSize);
+
+            IgnoreDirtySocketShutdown(() => this.channelSocket.ReceiveAsync(args));
+        }
+
+        protected override void TeardownServer()
+        {
+            this.channelSocket.Shutdown(SocketShutdown.Both);
         }
 
         private void IgnoreDirtySocketShutdown(Action action)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
@@ -12,67 +13,96 @@ namespace InfinityMQ.Performance.Benchmarks
         private Socket channelSocket;
 
         public TcpSocketSyncBaseline()
-            : base("TCP/IP", "Baseline (Synchronous)")
+            : base("TCP/IP", "REQ/REP Baseline")
         { }
-
-        protected override void SetupClient()
-        {
-            clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            clientSocket.Connect(EndPoint);
-        }
-
-        protected override void SetupServer()
-        {
-            serverSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            serverSocket.Bind(EndPoint);
-            serverSocket.Listen(1);
-
-            SignalServerReady();
-
-            channelSocket = serverSocket.Accept();
-        }
-
-        protected override void SendMessage()
-        {
-            clientSocket.Send(new Byte[MessageSize]);
-            
-            ByteCounter.CaptureClientBytesReceived(clientSocket.Receive(new Byte[MessageSize]));
-            if (ByteCounter.AllClientBytesReceived)
-                SignalClientReady();
-        }
-
-        protected override void ReceiveMessage()
-        {
-            ByteCounter.CaptureServerBytesReceived(channelSocket.Receive(new Byte[MessageSize]));
-
-            channelSocket.Send(new Byte[MessageSize]);
-            
-            if (ByteCounter.AllServerBytesReceived)
-                SignalServerReady();
-        }
-
-        protected override void TeardownClient()
-        {
-            clientSocket.Shutdown(SocketShutdown.Both);
-        }
-
-        protected override void TeardownServer()
-        {
-            channelSocket.Shutdown(SocketShutdown.Both);
-        }
 
         protected override void Dispose(Boolean disposing)
         {
             base.Dispose(disposing);
 
-            if (clientSocket != null)
-                clientSocket.Dispose();
+            this.clientSocket.DisposeIfSet();
+            this.serverSocket.DisposeIfSet();
+            this.channelSocket.DisposeIfSet();
+        }
 
-            if (serverSocket != null)
-                serverSocket.Dispose();
+        protected override void SetupClient()
+        {
+            this.clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.clientSocket.Connect(EndPoint);
+        }
 
-            if (channelSocket != null)
-                channelSocket.Dispose();
+        protected override void SendMessages()
+        {
+            Int32 bytesSent = 0;
+            Int32 bytesReceived = 0;
+            Int32 expectedBytes = MessageSize * MessageCount;
+
+            for (var i = 0; i < MessageCount; i++)
+            {
+                bytesSent += SendMessage(this.clientSocket);
+                bytesReceived += ReadMessage(this.clientSocket);
+            }
+
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
+        }
+
+        protected override void TeardownClient()
+        {
+            this.clientSocket.Shutdown(SocketShutdown.Both);
+        }
+
+        protected override void SetupServer()
+        {
+            this.serverSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.serverSocket.Bind(EndPoint);
+            this.serverSocket.Listen(1);
+        }
+
+        protected override void WaitForClient()
+        {
+            this.channelSocket = serverSocket.Accept();
+        }
+
+        protected override void ReceiveMessages()
+        {
+            Int32 bytesSent = 0;
+            Int32 bytesReceived = 0;
+            Int32 expectedBytes = MessageSize * MessageCount;
+
+            for (var i = 0; i < MessageCount; i++)
+            {
+                bytesReceived += ReadMessage(this.channelSocket);
+                bytesSent += SendMessage(this.channelSocket);
+            }
+
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
+        }
+
+        protected override void TeardownServer()
+        {
+            this.channelSocket.Shutdown(SocketShutdown.Both);
+        }
+
+        private Int32 SendMessage(Socket socket)
+        {
+            socket.Send(new Byte[MessageSize]);
+
+            return MessageSize;
+        }
+
+        private Int32 ReadMessage(Socket socket)
+        {
+            var buffer = new Byte[MessageSize];
+            var bytesRemaining = MessageSize;
+
+            do
+            {
+                bytesRemaining -= socket.Receive(buffer, buffer.Length - bytesRemaining, bytesRemaining, SocketFlags.None);
+            } while (bytesRemaining > 0);
+
+            return MessageSize;
         }
     }
 }

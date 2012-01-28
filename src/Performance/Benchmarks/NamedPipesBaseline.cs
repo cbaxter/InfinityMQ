@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.IO.Pipes;
 
 namespace InfinityMQ.Performance.Benchmarks
@@ -11,62 +13,93 @@ namespace InfinityMQ.Performance.Benchmarks
         private NamedPipeClientStream clientStream;
 
         public NamedPipesBaseline()
-            : base("Named Pipes", "Baseline")
+            : base("Named Pipes", "REQ/REP Baseline")
         { }
-
-        protected override void SetupClient()
-        {
-            clientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
-            clientStream.Connect();
-        }
-
-        protected override void SetupServer()
-        {
-            serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
-
-            SignalServerReady();
-
-            serverStream.WaitForConnection();
-        }
-
-        protected override void SendMessage()
-        {
-            clientStream.Write(new Byte[MessageSize], 0, MessageSize);
-            
-            ByteCounter.CaptureClientBytesReceived(clientStream.Read(new Byte[MessageSize], 0, MessageSize));
-            if (ByteCounter.AllClientBytesReceived)
-                SignalClientReady();
-        }
-
-        protected override void ReceiveMessage()
-        {
-            ByteCounter.CaptureServerBytesReceived(serverStream.Read(new Byte[MessageSize], 0, MessageSize));
-
-            serverStream.Write(new Byte[MessageSize], 0, MessageSize);
-
-            if (ByteCounter.AllServerBytesReceived)
-                SignalServerReady();
-        }
-
-        protected override void TeardownClient()
-        {
-            clientStream.WaitForPipeDrain();
-        }
-
-        protected override void TeardownServer()
-        {
-            serverStream.WaitForPipeDrain();
-        }
 
         protected override void Dispose(Boolean disposing)
         {
             base.Dispose(disposing);
 
-            if (serverStream != null)
-                serverStream.Dispose();
+            this.serverStream.DisposeIfSet();
+            this.clientStream.DisposeIfSet();
+        }
 
-            if (clientStream != null)
-                clientStream.Dispose();
+        protected override void SetupClient()
+        {
+            this.clientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
+            this.clientStream.Connect();
+        }
+
+        protected override void SendMessages()
+        {
+            Int32 bytesSent = 0;
+            Int32 bytesReceived = 0;
+            Int32 expectedBytes = MessageSize * MessageCount;
+
+            for (var i = 0; i < MessageCount; i++)
+            {
+                bytesSent += WriteMessage(this.clientStream);
+                bytesReceived += ReadMessage(this.clientStream);
+            }
+
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
+        }
+
+        protected override void TeardownClient()
+        {
+            this.clientStream.WaitForPipeDrain();
+        }
+
+        protected override void SetupServer()
+        {
+            this.serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
+        }
+
+        protected override void WaitForClient()
+        {
+            this.serverStream.WaitForConnection();
+        }
+
+        protected override void ReceiveMessages()
+        {
+            Int32 bytesSent = 0;
+            Int32 bytesReceived = 0;
+            Int32 expectedBytes = MessageSize * MessageCount;
+
+            for (var i = 0; i < MessageCount; i++)
+            {
+                bytesReceived += ReadMessage(this.serverStream);
+                bytesSent += WriteMessage(this.serverStream);
+            }
+
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
+        }
+
+        protected override void TeardownServer()
+        {
+            this.serverStream.WaitForPipeDrain();
+        }
+
+        private Int32 WriteMessage(Stream stream)
+        {
+            stream.Write(new Byte[MessageSize], 0, MessageSize);
+
+            return MessageSize;
+        }
+
+        private Int32 ReadMessage(Stream stream)
+        {
+            var buffer = new Byte[MessageSize];
+            var bytesRemaining = MessageSize;
+
+            do
+            {
+                bytesRemaining -= stream.Read(buffer, buffer.Length - bytesRemaining, bytesRemaining);
+            } while (bytesRemaining > 0);
+
+            return MessageSize;
         }
     }
 }
