@@ -5,7 +5,7 @@ using System.Runtime.Serialization.Json;
 
 namespace InfinityMQ.Serialization.Serializers
 {
-    internal class JsonMessageSerializer : ISerializeMessages
+    internal class JsonDataContractSerializer : ISerializeMessages
     {
         // Instances of DataContractJsonSerializer are thread safe except when the instance is
         // used with an implementation of the IDataContractSurrogate or DataContractResolver.
@@ -13,9 +13,9 @@ namespace InfinityMQ.Serialization.Serializers
 
         public void Serialize(Object graph, Stream output)
         {
-            Verify.NotNull(graph, "graph");
             Verify.NotNull(output, "output");
-
+            Verify.NotNull(output, "output");
+            
             var jsonSerializer = GetJsonSerializerFor(graph.GetType());
 
             jsonSerializer.WriteObject(output, graph);

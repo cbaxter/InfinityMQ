@@ -14,7 +14,7 @@ namespace InfinityMQ.Serialization
         private readonly IDictionary<String, Type> knownTypes = new Dictionary<String, Type>();
 
         public MessageReader(FrameReader frameReader)
-            : this(frameReader, new JsonMessageSerializer())
+            : this(frameReader, new JsonDataContractSerializer())
         { }
 
         public MessageReader(FrameReader frameReader, ISerializeMessages serializer)

@@ -14,7 +14,7 @@ namespace InfinityMQ.Serialization
         private readonly Dictionary<Type, Frame> typeHeaders = new Dictionary<Type, Frame>();
 
         public MessageWriter(FrameWriter frameWriter)
-            : this(frameWriter, new JsonMessageSerializer())
+            : this(frameWriter, new JsonDataContractSerializer())
         { }
 
         public MessageWriter(FrameWriter frameWriter, ISerializeMessages serializer) //TODO: overload with bufferSize param (can pass in something like Socket.SendBufferSize etc; default 8192.
