@@ -36,7 +36,7 @@ namespace InfinityMQ.Serialization
                 buffer = new Byte[length];
                 lengthKnown = true;
                 bytesConsumed = 0;
-            } while (bytesConsumed < length);
+            } while (length != 0 && bytesConsumed < length);
 
             return new Frame(flags, buffer);
         }
