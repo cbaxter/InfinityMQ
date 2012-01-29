@@ -82,7 +82,7 @@ namespace InfinityMQ.Serialization
 
             public override void Flush()
             {
-                this.frameWriter.Write(new Frame(FrameFlags.None, new ArraySegment<Byte>(this.frameBuffer, 0, this.bufferOffset - 1)));
+                this.frameWriter.Write(new Frame(FrameFlags.None, new ArraySegment<Byte>(this.frameBuffer, 0, this.bufferOffset)));
                 this.frameBuffer = new Byte[this.bufferSize];
                 this.bufferOffset = 0;
             }

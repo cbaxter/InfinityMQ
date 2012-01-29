@@ -57,7 +57,7 @@ namespace InfinityMQ.Serialization
         {
             using (var memoryStream = new MemoryStream())
             {
-                foreach (var item in frames.Skip(1))
+                foreach (var item in frames)
                     memoryStream.Write(item.Body);
 
                 memoryStream.Position = 0;

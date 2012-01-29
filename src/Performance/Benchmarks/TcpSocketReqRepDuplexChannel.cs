@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization;
 using InfinityMQ.Messaging;
 using InfinityMQ.Serialization;
 
@@ -13,8 +13,6 @@ namespace InfinityMQ.Performance.Benchmarks
         private Socket serverSocket;
         private Socket clientSocket;
         private Socket channelSocket;
-
-        //TODO: Dispose and cleanup.
         private NetworkStream clientNetworkStream;
         private DuplexChannel clientDuplexChannel;
         private NetworkStream channelNetworkStream;
@@ -31,12 +29,13 @@ namespace InfinityMQ.Performance.Benchmarks
             this.clientSocket.DisposeIfSet();
             this.serverSocket.DisposeIfSet();
             this.channelSocket.DisposeIfSet();
+            this.clientNetworkStream.DisposeIfSet();
+            this.channelNetworkStream.DisposeIfSet();
         }
 
         protected override void SetupClient()
         {
-            var serializer = new CachedMessageSerializer();
-            serializer.PrimeCache(new MyMessage(MessageSize));
+            var serializer = new BufferMessageSerializer(MessageSize);
 
             this.clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             this.clientSocket.Connect(EndPoint);
@@ -56,14 +55,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                this.clientDuplexChannel.Send(new MyMessage(MessageSize));
-                this.clientDuplexChannel.Receive();
-                //bytesSent += SendMessage(this.clientSocket);
-                //bytesReceived += ReadMessage(this.clientSocket);
+                bytesSent += SendMessage(this.clientDuplexChannel);
+                bytesReceived += ReceiveMessage(this.clientDuplexChannel);
             }
 
-            //Debug.Assert(bytesSent == expectedBytes);
-            //Debug.Assert(bytesReceived == expectedBytes);
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
         }
 
         protected override void TeardownClient()
@@ -80,8 +77,7 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void WaitForClient()
         {
-            var serializer = new CachedMessageSerializer();
-            serializer.PrimeCache(new MyMessage(MessageSize));
+            var serializer = new BufferMessageSerializer(MessageSize);
 
             this.channelSocket = serverSocket.Accept();
             this.channelNetworkStream = new NetworkStream(this.channelSocket, true);
@@ -99,14 +95,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                channelDuplexChannel.Receive();
-                channelDuplexChannel.Send(new MyMessage(MessageSize));
-                //bytesReceived += ReadMessage(this.channelSocket);
-                //bytesSent += SendMessage(this.channelSocket);
+                bytesReceived += ReceiveMessage(this.channelDuplexChannel);
+                bytesSent += SendMessage(this.channelDuplexChannel);
             }
 
-            //Debug.Assert(bytesSent == expectedBytes);
-            //Debug.Assert(bytesReceived == expectedBytes);
+            Debug.Assert(bytesSent == expectedBytes);
+            Debug.Assert(bytesReceived == expectedBytes);
         }
 
         protected override void TeardownServer()
@@ -114,16 +108,18 @@ namespace InfinityMQ.Performance.Benchmarks
             this.channelSocket.Shutdown(SocketShutdown.Both);
         }
 
-        [DataContract]
-        public class MyMessage
+        private Int32 ReceiveMessage(DuplexChannel channel)
         {
-            [DataMember]
-            public Byte[] Data { get; set; }
+            var buffer = (Byte[])channel.Receive();
 
-            public MyMessage(Int32 messageSize)
-            {
-                Data = new Byte[messageSize];
-            }
+            return buffer.Length;
+        }
+
+        private Int32 SendMessage(DuplexChannel channel)
+        {
+            channel.Send(new Byte[MessageSize]);
+
+            return MessageSize;
         }
     }
 }
