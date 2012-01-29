@@ -5,14 +5,14 @@ using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class TcpSocketSyncBaseline : ThreadedBenchmark
+    internal class TcpSocketReqRepBaseline : ThreadedBenchmark
     {
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
         private Socket serverSocket;
         private Socket clientSocket;
         private Socket channelSocket;
 
-        public TcpSocketSyncBaseline()
+        public TcpSocketReqRepBaseline()
             : base("TCP/IP", "REQ/REP Baseline")
         { }
 

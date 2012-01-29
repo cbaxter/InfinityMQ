@@ -5,14 +5,14 @@ using System.IO.Pipes;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class NamedPipesBaseline : ThreadedBenchmark
+    internal class NamedPipesReqRepBaseline : ThreadedBenchmark
     {
         private const String ServerName = ".";
         private const String PipeName = "InfinityMQ.Benchmark.NamedPipe";
         private NamedPipeServerStream serverStream;
         private NamedPipeClientStream clientStream;
 
-        public NamedPipesBaseline()
+        public NamedPipesReqRepBaseline()
             : base("Named Pipes", "REQ/REP Baseline")
         { }
 
