@@ -42,7 +42,7 @@ namespace InfinityMQ.Serialization
             do
             {
                 frames.Add(frame = this.frameReader.Read());
-            } while (frame.Flags.HasFlag(FrameFlags.More));
+            } while ((frame.Flags & FrameFlags.More) == FrameFlags.More);
 
             return frames;
         }
