@@ -67,9 +67,9 @@ namespace InfinityMQ.Serialization
         private class FramedOutputStream : Stream
         {
             private readonly FrameWriter frameWriter;
+            private readonly Byte[] frameBuffer;
             private readonly Int32 bufferSize;
             private Int32 bufferOffset;
-            private Byte[] frameBuffer;
 
             public FramedOutputStream(FrameWriter frameWriter, Int32 bufferSize)
             {
@@ -82,8 +82,7 @@ namespace InfinityMQ.Serialization
 
             public override void Flush()
             {
-                this.frameWriter.Write(new Frame(FrameFlags.None, new ArraySegment<Byte>(this.frameBuffer, 0, this.bufferOffset)));
-                this.frameBuffer = new Byte[this.bufferSize];
+                this.frameWriter.Write(this.frameBuffer, 0, this.bufferOffset, FrameFlags.None);
                 this.bufferOffset = 0;
             }
 
@@ -118,8 +117,7 @@ namespace InfinityMQ.Serialization
                     if (this.bufferOffset < this.bufferSize)
                         continue;
 
-                    this.frameWriter.Write(new Frame(FrameFlags.More, this.frameBuffer));
-                    this.frameBuffer = new Byte[this.bufferSize];
+                    this.frameWriter.Write(this.frameBuffer, 0, this.bufferOffset, FrameFlags.More);
                     this.bufferOffset = 0;
                 } while (count > 0);
             }

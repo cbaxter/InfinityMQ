@@ -11,6 +11,7 @@ namespace InfinityMQ.Serialization
     {
         private readonly FrameReader frameReader;
         private readonly ISerializeMessages serializer;
+        private readonly IDictionary<String, Type> knownTypes = new Dictionary<String, Type>();
 
         public MessageReader(FrameReader frameReader)
             : this(frameReader, new JsonMessageSerializer())
@@ -48,9 +49,15 @@ namespace InfinityMQ.Serialization
 
         private Type GetMessageType(Frame frame)
         {
-            var body = frame.Body;
+            Type type;
+            String typeName = Encoding.UTF8.GetString(frame.Body);
 
-            return Type.GetType(Encoding.UTF8.GetString(body.Array, body.Offset, body.Count));
+            if (knownTypes.TryGetValue(typeName, out type))
+                return type;
+
+            knownTypes[typeName] = type = Type.GetType(typeName);
+
+            return type;
         }
 
         private Object DeserializeMessage(Type type, IEnumerable<Frame> frames)
@@ -58,7 +65,7 @@ namespace InfinityMQ.Serialization
             using (var memoryStream = new MemoryStream())
             {
                 foreach (var item in frames)
-                    memoryStream.Write(item.Body);
+                    memoryStream.Write(item.Body, 0, item.Size);
 
                 memoryStream.Position = 0;
 

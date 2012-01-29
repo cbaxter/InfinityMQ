@@ -19,24 +19,26 @@ namespace InfinityMQ.Serialization
         public Frame Read()
         {
             var bytesConsumed = 0;
+            var lengthKnown = false;
             var buffer = lengthBuffer;
             var length = sizeof(Int32);
-            var lengthKnown = false;
+            var flags = FrameFlags.None;
 
             do
             {
                 bytesConsumed += this.baseStream.Read(buffer, bytesConsumed, length - bytesConsumed);
 
-                if (lengthKnown || bytesConsumed != length) 
+                if (lengthKnown || bytesConsumed != length)
                     continue;
 
-                length = BitConverter.ToInt32(buffer, 0);
+                length = BitConverter.ToInt32(buffer, 0) - sizeof(Byte);
+                flags = (FrameFlags)baseStream.ReadByte();
                 buffer = new Byte[length];
                 lengthKnown = true;
                 bytesConsumed = 0;
             } while (bytesConsumed < length);
 
-            return length < 1 ? null : new Frame((FrameFlags)buffer[0], buffer.ToSegment(1));
+            return length < 1 ? null : new Frame(flags, buffer);
         }
     }
 }

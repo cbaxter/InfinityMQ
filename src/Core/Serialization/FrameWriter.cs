@@ -5,6 +5,7 @@ namespace InfinityMQ.Serialization
 {
     internal class FrameWriter
     {
+        private readonly Byte[] preamble = new Byte[Frame.PreambleSize];
         private readonly Stream baseStream;
 
         public Stream BaseStream { get { return this.baseStream; } }
@@ -18,12 +19,21 @@ namespace InfinityMQ.Serialization
 
         public void Write(Frame frame)
         {
-            if (frame == null)
-                return;
+            Write(frame.Body, 0, frame.Body.Length, frame.Flags);
+        }
 
-            this.baseStream.Write(BitConverter.GetBytes(sizeof(Byte) + frame.Size));
-            this.baseStream.WriteByte((Byte)frame.Flags);
-            this.baseStream.Write(frame.Body);
+        public void Write(Byte[] buffer, Int32 offset, Int32 count, FrameFlags flags)
+        {
+            unsafe
+            {
+                fixed (Byte* numRef = preamble)
+                    *((Int32*)numRef) = sizeof(Byte) + count;
+
+                preamble[Frame.PreambleFlagsOffset] = (Byte)flags;
+            }
+
+            this.baseStream.Write(preamble, 0, preamble.Length);
+            this.baseStream.Write(buffer, offset, count);
         }
     }
 }
