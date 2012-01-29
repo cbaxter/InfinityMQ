@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using InfinityMQ.Performance.Benchmarks;
+using InfinityMQ.Serialization.Serializers;
 
 namespace InfinityMQ.Performance
 {
@@ -9,25 +14,48 @@ namespace InfinityMQ.Performance
     {
         public static void Main()
         {
-            var benchmarkGroups = GetBenchmarks().ToList();
-            var maxNameLength = benchmarkGroups.SelectMany(group => group).Select(group => group.Name.Length).Max();
-            var messageSize = ReadInteger("Enter Message Size (Bytes):\t");
-            var messageCount = ReadInteger("Enter Message Count:\t\t");
+            var messageSize = 1024;// ReadInteger("Enter Message Size (Bytes):\t");
+            var messageCount = 10000; // ReadInteger("Enter Message Count:\t\t");
 
-            foreach (var benchmarkGroup in benchmarkGroups)
+            Decimal tcpLatency = 0;
+            Decimal pipeLatency = 0;
+
+            for (var i = 0; i < 20; i++)
             {
-                Console.WriteLine();
-                Console.WriteLine(benchmarkGroup.Key);
-                Console.WriteLine("--------------------------------------------------");
+                var benchmarkGroups = GetBenchmarks().ToList();
+                var maxNameLength = benchmarkGroups.SelectMany(group => group).Select(group => group.Name.Length).Max();
 
-                foreach (var benchmark in benchmarkGroup)
+                foreach (var benchmarkGroup in benchmarkGroups)
                 {
-                    Console.Write("{0} --> ", benchmark.Name.PadRight(maxNameLength, ' '));
-                    Console.WriteLine(benchmark.Run(messageCount, messageSize));
+                    Console.WriteLine();
+                    Console.WriteLine(benchmarkGroup.Key);
+                    Console.WriteLine("--------------------------------------------------");
 
-                    benchmark.Dispose();
+                    foreach (var benchmark in benchmarkGroup)
+                    {
+                        Console.Write("{0} --> ", benchmark.Name.PadRight(maxNameLength, ' '));
+
+                        var metrics = benchmark.Run(messageCount, messageSize);
+
+                        if (benchmark.GetType() == typeof(NamedPipesDuplexChannel))
+                            pipeLatency += metrics.MessageLatency;
+
+                        if (benchmark.GetType() == typeof(TcpSocketDuplexChannel))
+                            tcpLatency += metrics.MessageLatency;
+
+                        Console.WriteLine(metrics);
+
+                        benchmark.Dispose();
+
+                        //Thread.Sleep(2000);
+                    }
                 }
             }
+
+            Console.WriteLine();
+            Console.WriteLine("Pipe Latency = {0}", pipeLatency / 20);
+            Console.WriteLine("TCP Latency = {0}", tcpLatency / 20);
+
 
             Console.WriteLine();
             Console.WriteLine("Press any key to exit...");

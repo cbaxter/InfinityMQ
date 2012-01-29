@@ -28,6 +28,8 @@ namespace InfinityMQ.Serialization
 
         public Object Read()
         {
+            //TODO: Issue #10 -- MessageReader cannot assume frame structure.
+
             var frames = ReadMessageFrames();
             var type = GetMessageType(frames.First());
 
@@ -50,7 +52,8 @@ namespace InfinityMQ.Serialization
         private Type GetMessageType(Frame frame)
         {
             Type type;
-            String typeName = Encoding.UTF8.GetString(frame.Body);
+            ArraySegment<Byte> encodedBytes = frame.Body;
+            String typeName = Encoding.UTF8.GetString(encodedBytes.Array, encodedBytes.Offset, encodedBytes.Count);
 
             if (knownTypes.TryGetValue(typeName, out type))
                 return type;
@@ -65,7 +68,7 @@ namespace InfinityMQ.Serialization
             using (var memoryStream = new MemoryStream())
             {
                 foreach (var item in frames)
-                    memoryStream.Write(item.Body, 0, item.Size);
+                    memoryStream.Write(item.Body.Array, item.Body.Offset, item.Body.Count);
 
                 memoryStream.Position = 0;
 

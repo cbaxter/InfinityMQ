@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace InfinityMQ.Serialization
 {
@@ -17,23 +18,31 @@ namespace InfinityMQ.Serialization
             this.baseStream = stream;
         }
 
-        public void Write(Frame frame)
+        public void Write(params Frame[] frames)
         {
-            Write(frame.Body, 0, frame.Body.Length, frame.Flags);
-        }
+            //TODO: Issue #11 -- Implement BufferPool (or consider WCF BufferManager?)
+            //TODO: Issue #12 -- Consider custom implementation of FrameWriter for sockets.
+            var rawMessage = new Byte[frames.Length * Frame.PreambleSize + frames.Sum(frame => frame.Body.Count)];
+            var offset = 0;
 
-        public void Write(Byte[] buffer, Int32 offset, Int32 count, FrameFlags flags)
-        {
-            unsafe
+            foreach(var frame in frames)
             {
-                fixed (Byte* numRef = preamble)
-                    *((Int32*)numRef) = sizeof(Byte) + count;
+                unsafe
+                {
+                    fixed (Byte* numRef = preamble)
+                        *((Int32*)numRef) = sizeof(Byte) + frame.Body.Count;
 
-                preamble[Frame.PreambleFlagsOffset] = (Byte)flags;
+                    preamble[Frame.PreambleFlagsOffset] = (Byte)frame.Flags;
+                }
+
+                Buffer.BlockCopy(preamble, 0, rawMessage, offset, Frame.PreambleSize);
+                offset += Frame.PreambleSize;
+
+                Buffer.BlockCopy(frame.Body.Array, frame.Body.Offset, rawMessage, offset, frame.Body.Count);
+                offset += frame.Body.Count;
             }
 
-            this.baseStream.Write(preamble, 0, preamble.Length);
-            this.baseStream.Write(buffer, offset, count);
+            this.baseStream.Write(rawMessage, 0, rawMessage.Length);
         }
     }
 }

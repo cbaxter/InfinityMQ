@@ -17,7 +17,7 @@ namespace InfinityMQ.Serialization
             : this(frameWriter, new JsonDataContractSerializer())
         { }
 
-        public MessageWriter(FrameWriter frameWriter, ISerializeMessages serializer) //TODO: overload with bufferSize param (can pass in something like Socket.SendBufferSize etc; default 8192.
+        public MessageWriter(FrameWriter frameWriter, ISerializeMessages serializer)
         {
             Verify.NotNull(frameWriter, "frameWriter");
             Verify.NotNull(serializer, "serializer");
@@ -31,13 +31,10 @@ namespace InfinityMQ.Serialization
             if (message == null)
                 return;
 
-            WriteMessageHeaders(message);
-            WriteMessageBody(message);
-        }
+            //TODO: Issue #8 -- Support custom message headers.
+            //TODO: Issue #9 -- Header frames should be 'Key/Value' pairs.
 
-        private void WriteMessageHeaders(Object message)
-        {
-            this.frameWriter.Write(GetOrCreateTypeFrame(message));
+            this.frameWriter.Write(GetOrCreateTypeFrame(message), GetBodyFrame(message));
         }
 
         private Frame GetOrCreateTypeFrame(Object message)
@@ -50,105 +47,25 @@ namespace InfinityMQ.Serialization
 
             var assemblyQualifiedName = type.AssemblyQualifiedName ?? String.Empty;
             var versionlessAssemblyQualifiedName = Regex.Replace(assemblyQualifiedName, @", Version=\d+.\d+.\d+.\d+,", ",");
+            var encodedBytes = Encoding.UTF8.GetBytes(versionlessAssemblyQualifiedName);
+            var rawFrame = new Byte[encodedBytes.Length + sizeof (Byte)];
 
-            this.typeHeaders[type] = typeFrame = new Frame(FrameFlags.Header | FrameFlags.More, Encoding.UTF8.GetBytes(versionlessAssemblyQualifiedName));
+            rawFrame[0] = (Byte)(FrameFlags.Header | FrameFlags.More);
+            Buffer.BlockCopy(encodedBytes, 0, rawFrame, 0, encodedBytes.Length);
+
+            this.typeHeaders[type] = typeFrame = new Frame(rawFrame);
 
             return typeFrame;
         }
 
-        private void WriteMessageBody(Object message)
+        private Frame GetBodyFrame(Object message)
         {
-            using (var frameStream = new FramedOutputStream(this.frameWriter, 8192)) //TODO: see above
-                this.serializer.Serialize(message, frameStream);
-        }
-
-        #region FramedOutputStream
-
-        private class FramedOutputStream : Stream
-        {
-            private readonly FrameWriter frameWriter;
-            private readonly Byte[] frameBuffer;
-            private readonly Int32 bufferSize;
-            private Int32 bufferOffset;
-
-            public FramedOutputStream(FrameWriter frameWriter, Int32 bufferSize)
+            using (var memoryStream = new MemoryStream())
             {
-                Verify.NotNull(frameWriter, "frameWriter");
+                this.serializer.Serialize(message, memoryStream);
 
-                this.frameWriter = frameWriter;
-                this.bufferSize = bufferSize;
-                this.frameBuffer = new Byte[bufferSize];
-            }
-
-            public override void Flush()
-            {
-                this.frameWriter.Write(this.frameBuffer, 0, this.bufferOffset, FrameFlags.None);
-                this.bufferOffset = 0;
-            }
-
-            public override Int64 Seek(Int64 offset, SeekOrigin origin)
-            {
-                throw new NotSupportedException();
-            }
-
-            public override void SetLength(Int64 value)
-            {
-                throw new NotSupportedException();
-            }
-
-            public override Int32 Read(Byte[] buffer, Int32 offset, Int32 count)
-            {
-                throw new NotSupportedException();
-            }
-
-            public override void Write(Byte[] buffer, Int32 offset, Int32 count)
-            {
-                do
-                {
-                    var availableSpace = this.bufferSize - this.bufferOffset;
-                    var bytesToConsume = Math.Min(availableSpace, count);
-
-                    Buffer.BlockCopy(buffer, offset, this.frameBuffer, this.bufferOffset, bytesToConsume);
-
-                    this.bufferOffset += bytesToConsume;
-                    offset += bytesToConsume;
-                    count -= bytesToConsume;
-
-                    if (this.bufferOffset < this.bufferSize)
-                        continue;
-
-                    this.frameWriter.Write(this.frameBuffer, 0, this.bufferOffset, FrameFlags.More);
-                    this.bufferOffset = 0;
-                } while (count > 0);
-            }
-
-            public override Boolean CanRead
-            {
-                get { return false; }
-            }
-
-            public override Boolean CanSeek
-            {
-                get { return false; }
-            }
-
-            public override Boolean CanWrite
-            {
-                get { return true; }
-            }
-
-            public override Int64 Length
-            {
-                get { throw new NotSupportedException(); }
-            }
-
-            public override Int64 Position
-            {
-                get { throw new NotSupportedException(); }
-                set { throw new NotSupportedException(); }
+                return new Frame(FrameFlags.None, new ArraySegment<Byte>(memoryStream.GetBuffer(), 0, (Int32)memoryStream.Length));
             }
         }
-
-        #endregion
     }
 }

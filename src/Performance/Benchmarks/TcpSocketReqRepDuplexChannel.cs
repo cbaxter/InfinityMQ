@@ -42,7 +42,7 @@ namespace InfinityMQ.Performance.Benchmarks
 
             this.clientNetworkStream = new NetworkStream(this.clientSocket, true);
             this.clientDuplexChannel = new DuplexChannel(
-                                           new MessageReader(new FrameReader(this.clientNetworkStream), serializer),
+                                           new MessageReader(new FrameReader(this.clientNetworkStream, this.clientSocket.ReceiveBufferSize), serializer),
                                            new MessageWriter(new FrameWriter(this.clientNetworkStream), serializer)
                                        );
         }
@@ -82,7 +82,7 @@ namespace InfinityMQ.Performance.Benchmarks
             this.channelSocket = serverSocket.Accept();
             this.channelNetworkStream = new NetworkStream(this.channelSocket, true);
             this.channelDuplexChannel = new DuplexChannel(
-                                            new MessageReader(new FrameReader(this.channelNetworkStream), serializer),
+                                            new MessageReader(new FrameReader(this.channelNetworkStream, this.channelSocket.ReceiveBufferSize), serializer),
                                             new MessageWriter(new FrameWriter(this.channelNetworkStream), serializer)
                                         );
         }

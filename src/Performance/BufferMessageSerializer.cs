@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
-using InfinityMQ.Serialization;
+using InfinityMQ.Serialization.Serializers;
 
 namespace InfinityMQ.Performance
 {
@@ -13,13 +14,10 @@ namespace InfinityMQ.Performance
         {
             this.messageSize = messageSize;
         }
-        
+
         public void Serialize(Object graph, Stream output)
         {
-            Verify.NotNull(graph, "graph");
-            Verify.NotNull(output, "output");
-
-            var buffer = (Byte[]) graph;
+            var buffer = (Byte[])graph;
 
             output.Write(buffer, 0, buffer.Length);
             output.Flush();
@@ -27,9 +25,6 @@ namespace InfinityMQ.Performance
 
         public Object Deserialize(Type type, Stream input)
         {
-            Verify.NotNull(type, "type");
-            Verify.NotNull(input, "input");
-
             var buffer = new Byte[messageSize];
             var bytesRemaining = messageSize;
 
