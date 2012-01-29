@@ -1,34 +1,14 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class NamedPipesReqRepBaseline : ThreadedBenchmark
+    internal class NamedPipesReqRepBaseline : NamedPipesBenchmark
     {
-        private const String ServerName = ".";
-        private const String PipeName = "InfinityMQ.Benchmark.NamedPipe";
-        private NamedPipeServerStream serverStream;
-        private NamedPipeClientStream clientStream;
-
         public NamedPipesReqRepBaseline()
-            : base("Named Pipes", "REQ/REP Baseline")
+            : base("REQ/REP Baseline")
         { }
-
-        protected override void Dispose(Boolean disposing)
-        {
-            base.Dispose(disposing);
-
-            this.serverStream.DisposeIfSet();
-            this.clientStream.DisposeIfSet();
-        }
-
-        protected override void SetupClient()
-        {
-            this.clientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
-            this.clientStream.Connect();
-        }
 
         protected override void SendMessages()
         {
@@ -38,27 +18,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                bytesSent += WriteMessage(this.clientStream);
-                bytesReceived += ReadMessage(this.clientStream);
+                bytesSent += WriteMessage(ClientStream);
+                bytesReceived += ReadMessage(ClientStream);
             }
 
             Debug.Assert(bytesSent == expectedBytes);
             Debug.Assert(bytesReceived == expectedBytes);
-        }
-
-        protected override void TeardownClient()
-        {
-            this.clientStream.WaitForPipeDrain();
-        }
-
-        protected override void SetupServer()
-        {
-            this.serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
-        }
-
-        protected override void WaitForClient()
-        {
-            this.serverStream.WaitForConnection();
         }
 
         protected override void ReceiveMessages()
@@ -69,17 +34,12 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                bytesReceived += ReadMessage(this.serverStream);
-                bytesSent += WriteMessage(this.serverStream);
+                bytesReceived += ReadMessage(ServerStream);
+                bytesSent += WriteMessage(ServerStream);
             }
 
             Debug.Assert(bytesSent == expectedBytes);
             Debug.Assert(bytesReceived == expectedBytes);
-        }
-
-        protected override void TeardownServer()
-        {
-            this.serverStream.WaitForPipeDrain();
         }
 
         private Int32 WriteMessage(Stream stream)
