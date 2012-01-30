@@ -1,33 +1,34 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Pipes;
+using System.Net;
+using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class NamedPipesBaseline : ThreadedBenchmark
+    internal class TcpSocketReqRepBaseline : ThreadedBenchmark
     {
-        private const String ServerName = ".";
-        private const String PipeName = "InfinityMQ.Benchmark.NamedPipe";
-        private NamedPipeServerStream serverStream;
-        private NamedPipeClientStream clientStream;
+        private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
+        private Socket serverSocket;
+        private Socket clientSocket;
+        private Socket channelSocket;
 
-        public NamedPipesBaseline()
-            : base("Named Pipes", "REQ/REP Baseline")
+        public TcpSocketReqRepBaseline()
+            : base("TCP/IP", "REQ/REP Baseline")
         { }
 
         protected override void Dispose(Boolean disposing)
         {
             base.Dispose(disposing);
 
-            this.serverStream.DisposeIfSet();
-            this.clientStream.DisposeIfSet();
+            this.clientSocket.DisposeIfSet();
+            this.serverSocket.DisposeIfSet();
+            this.channelSocket.DisposeIfSet();
         }
 
         protected override void SetupClient()
         {
-            this.clientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
-            this.clientStream.Connect();
+            this.clientSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.clientSocket.Connect(EndPoint);
         }
 
         protected override void SendMessages()
@@ -38,8 +39,8 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                bytesSent += WriteMessage(this.clientStream);
-                bytesReceived += ReadMessage(this.clientStream);
+                bytesSent += SendMessage(this.clientSocket);
+                bytesReceived += ReadMessage(this.clientSocket);
             }
 
             Debug.Assert(bytesSent == expectedBytes);
@@ -48,17 +49,19 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void TeardownClient()
         {
-            this.clientStream.WaitForPipeDrain();
+            this.clientSocket.Shutdown(SocketShutdown.Both);
         }
 
         protected override void SetupServer()
         {
-            this.serverStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
+            this.serverSocket = new Socket(EndPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.serverSocket.Bind(EndPoint);
+            this.serverSocket.Listen(1);
         }
 
         protected override void WaitForClient()
         {
-            this.serverStream.WaitForConnection();
+            this.channelSocket = serverSocket.Accept();
         }
 
         protected override void ReceiveMessages()
@@ -69,8 +72,8 @@ namespace InfinityMQ.Performance.Benchmarks
 
             for (var i = 0; i < MessageCount; i++)
             {
-                bytesReceived += ReadMessage(this.serverStream);
-                bytesSent += WriteMessage(this.serverStream);
+                bytesReceived += ReadMessage(this.channelSocket);
+                bytesSent += SendMessage(this.channelSocket);
             }
 
             Debug.Assert(bytesSent == expectedBytes);
@@ -79,24 +82,24 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void TeardownServer()
         {
-            this.serverStream.WaitForPipeDrain();
+            this.channelSocket.Shutdown(SocketShutdown.Both);
         }
 
-        private Int32 WriteMessage(Stream stream)
+        private Int32 SendMessage(Socket socket)
         {
-            stream.Write(new Byte[MessageSize], 0, MessageSize);
+            socket.Send(new Byte[MessageSize]);
 
             return MessageSize;
         }
 
-        private Int32 ReadMessage(Stream stream)
+        private Int32 ReadMessage(Socket socket)
         {
             var buffer = new Byte[MessageSize];
             var bytesRemaining = MessageSize;
 
             do
             {
-                bytesRemaining -= stream.Read(buffer, buffer.Length - bytesRemaining, bytesRemaining);
+                bytesRemaining -= socket.Receive(buffer, buffer.Length - bytesRemaining, bytesRemaining, SocketFlags.None);
             } while (bytesRemaining > 0);
 
             return MessageSize;

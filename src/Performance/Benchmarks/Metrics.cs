@@ -27,14 +27,5 @@ namespace InfinityMQ.Performance.Benchmarks
             MessageThroughput = (Decimal)MessageCount * Stopwatch.Frequency / elapsedTicks;
             DataThroughput = MessageThroughput * MessageSize * 8M / 1000000M;
         }
-
-        public override string ToString()
-        {
-            return String.Format("Message Latency = {0} [us]; Message Throughput = {1} [msg/s]; Data Throughput = {2} [Mb/s];",
-                       MessageLatency.ToString("F2").PadLeft(10, ' '),
-                       MessageThroughput.ToString("F2").PadLeft(10, ' '),
-                       DataThroughput.ToString("F2").PadLeft(10, ' ')
-                   );
-        }
     }
 }
