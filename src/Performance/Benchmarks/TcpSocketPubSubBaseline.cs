@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class TcpSocketAsyncBaseline : ThreadedBenchmark
+    internal class TcpSocketPubSubBaseline : ThreadedBenchmark
     {
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
         private PrimitiveObjectPool<SocketAsyncEventArgs> receiveArgsPool;
@@ -15,7 +15,7 @@ namespace InfinityMQ.Performance.Benchmarks
         private Socket clientSocket;
         private Socket channelSocket;
 
-        public TcpSocketAsyncBaseline()
+        public TcpSocketPubSubBaseline()
             : base("TCP/IP", "PUB/SUB Baseline")
         { }
 
