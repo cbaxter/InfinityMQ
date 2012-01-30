@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using InfinityMQ.Performance.Benchmarks;
-using InfinityMQ.Serialization.Serializers;
 
 namespace InfinityMQ.Performance
 {
@@ -14,12 +9,13 @@ namespace InfinityMQ.Performance
     {
         public static void Main()
         {
+            var benchmarkGroups = GetBenchmarks().ToList();
             var messageSize = ReadInteger("Enter Message Size (Bytes):\t");
             var messageCount = ReadInteger("Enter Message Count:\t\t");
-            var benchmarkGroups = GetBenchmarks().ToList();
-            var maxNameLength = benchmarkGroups.SelectMany(group => group).Select(group => group.Name.Length).Max();
 
-
+            Console.WriteLine();
+            Console.WriteLine("Benchmarked using {0} meesages of {1} bytes each.", messageCount.ToString("N0"), messageSize.ToString("N0"));
+           
             foreach (var benchmarkGroup in benchmarkGroups)
             {
                 Console.WriteLine();
@@ -28,9 +24,17 @@ namespace InfinityMQ.Performance
 
                 foreach (var benchmark in benchmarkGroup)
                 {
-                    Console.Write("{0} --> ", benchmark.Name.PadRight(maxNameLength, ' '));
-                    Console.WriteLine(benchmark.Run(messageCount, messageSize));
+                    var metrics = benchmark.Run(messageCount, messageSize);
 
+                    Console.WriteLine(
+                        "{1}{0}{0}- Message Latency = {2} [us]{0}- Message Throughput = {3} [msg/s]{0}- Data Throughput = {4} [Mb/s]{0}",
+                        Environment.NewLine,
+                        benchmark.Name,
+                        metrics.MessageLatency.ToString("F2"),
+                        metrics.MessageThroughput.ToString("F2"),
+                        metrics.DataThroughput.ToString("F2")
+                    );
+                    
                     benchmark.Dispose();
                 }
             }
