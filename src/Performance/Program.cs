@@ -15,7 +15,7 @@ namespace InfinityMQ.Performance
             var messageCount = ReadInteger("Enter Message Count:\t\t");
 
             Console.WriteLine();
-            Console.WriteLine("Benchmarked using {0} meesages of {1} bytes each.", messageCount.ToString("N0"), messageSize.ToString("N0"));
+            Console.WriteLine("Benchmarked using {0} messages of {1} bytes each.", messageCount.ToString("N0"), messageSize.ToString("N0"));
 
             foreach (var benchmarkGroup in benchmarkGroups)
             {
