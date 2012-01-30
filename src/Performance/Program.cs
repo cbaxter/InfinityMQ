@@ -10,12 +10,13 @@ namespace InfinityMQ.Performance
         public static void Main()
         {
             var benchmarkGroups = GetBenchmarks().ToList();
+            var nameWidth = benchmarkGroups.SelectMany(group => group).Max(benchmark => benchmark.Name.Length) + 20;
             var messageSize = ReadInteger("Enter Message Size (Bytes):\t");
             var messageCount = ReadInteger("Enter Message Count:\t\t");
 
             Console.WriteLine();
             Console.WriteLine("Benchmarked using {0} meesages of {1} bytes each.", messageCount.ToString("N0"), messageSize.ToString("N0"));
-           
+
             foreach (var benchmarkGroup in benchmarkGroups)
             {
                 Console.WriteLine();
@@ -24,17 +25,19 @@ namespace InfinityMQ.Performance
 
                 foreach (var benchmark in benchmarkGroup)
                 {
+                    Console.Write("Benchmarking {0}...", benchmark.Name);
+
                     var metrics = benchmark.Run(messageCount, messageSize);
 
                     Console.WriteLine(
-                        "{1}{0}{0}- Message Latency = {2} [us]{0}- Message Throughput = {3} [msg/s]{0}- Data Throughput = {4} [Mb/s]{0}",
+                        "\r{1}{0}{0}- Message Latency = {2} [us]{0}- Message Throughput = {3} [msg/s]{0}- Data Throughput = {4} [Mb/s]{0}",
                         Environment.NewLine,
-                        benchmark.Name,
+                        benchmark.Name.PadRight(nameWidth, ' '),
                         metrics.MessageLatency.ToString("F2"),
                         metrics.MessageThroughput.ToString("F2"),
                         metrics.DataThroughput.ToString("F2")
                     );
-                    
+
                     benchmark.Dispose();
                 }
             }
