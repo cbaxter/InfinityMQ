@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO.Pipes;
+using InfinityMQ.Channels;
 using InfinityMQ.Messaging;
 using InfinityMQ.Serialization;
 

@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Json;
 
-namespace InfinityMQ.Serialization.Serializers
+namespace InfinityMQ.Serialization
 {
-    internal class JsonDataContractSerializer : ISerializeMessages
+    public class JsonDataContractSerializer : ISerializeMessages
     {
         // Instances of DataContractJsonSerializer are thread safe except when the instance is
         // used with an implementation of the IDataContractSurrogate or DataContractResolver.
         private readonly IDictionary<Type, DataContractJsonSerializer> jsonSerializers = new Dictionary<Type, DataContractJsonSerializer>();
+        public static readonly ISerializeMessages Instance = new JsonDataContractSerializer();
 
         public void Serialize(Object graph, Stream output)
         {

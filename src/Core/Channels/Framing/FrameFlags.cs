@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace InfinityMQ.Serialization
+namespace InfinityMQ.Channels.Framing
 {
     [Flags]
     internal enum FrameFlags : sbyte

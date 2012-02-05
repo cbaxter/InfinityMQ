@@ -48,21 +48,23 @@
     <Compile Include="..\Shared\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="Benchmarks\NamedPipesBenchmark.cs" />
-    <Compile Include="Benchmarks\NamedPipesReqRepDuplexChannel.cs" />
+    <Compile Include="Benchmarks\NamedPipesBenchmark.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Benchmarks\NamedPipesReqRepBaseline.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Benchmarks\TcpSocketPubSubBaseline.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Benchmarks\TcpSocketReqRepDuplexChannel.cs" />
+    <Compile Include="Benchmarks\TcpSocketReqRepDuplexChannel.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="BufferMessageSerializer.cs" />
     <Compile Include="Counter.cs" />
     <Compile Include="Benchmarks\Metrics.cs" />
     <Compile Include="Benchmarks\IBenchmark.cs" />
     <Compile Include="PrimitiveObjectPool.cs" />
-    <Compile Include="Benchmarks\TcpSocketReqRepBaseline.cs" />
     <Compile Include="Benchmarks\ThreadedBenchmark.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
