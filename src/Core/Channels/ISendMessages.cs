@@ -2,7 +2,7 @@
 
 namespace InfinityMQ.Channels
 {
-    public interface ISendMessages : IConnectEndpoints
+    public interface ISendMessages : IChannelMessages
     {
         void Send(Object message);
         void Send(Object message, Type type);

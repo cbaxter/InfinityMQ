@@ -2,7 +2,7 @@
 
 namespace InfinityMQ.Channels
 {
-    public interface IPublishMessages : IConnectEndpoints
+    public interface IPublishMessages : IChannelMessages
     {
         void Publish(Object message);
         void Publish(Object message, Type type);

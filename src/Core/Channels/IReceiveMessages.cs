@@ -2,7 +2,7 @@
 
 namespace InfinityMQ.Channels
 {
-    public interface IReceiveMessages : IBindEndpoints
+    public interface IReceiveMessages : IChannelMessages
     {
         void Send(Object message);
         void Send(Object message, Type type);

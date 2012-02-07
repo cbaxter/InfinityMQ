@@ -2,7 +2,7 @@
 
 namespace InfinityMQ.Channels
 {
-    public interface ISubscribeToMessages : IBindEndpoints
+    public interface ISubscribeToMessages : IChannelMessages
     {
         //void SubscribeAll();
         //void Subscribe(Type type);
