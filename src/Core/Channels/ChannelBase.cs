@@ -12,7 +12,7 @@ namespace InfinityMQ.Channels
         private readonly ICreateEndpoints endpointFactory;
         private readonly ISerializeMessages messageSerializer;
 
-        //TODO: Issue #XX. Support binding/connecting to multiple endpoints.
+        //TODO: Issue #19 - Allow for multiple Bind/Connect calls on single channel.
         private IEndpoint messageEndpoint;
 
         protected ChannelBase(ICreateEndpoints endpointFactory, ISerializeMessages messageSerializer)

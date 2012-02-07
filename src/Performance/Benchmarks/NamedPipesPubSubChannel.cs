@@ -4,15 +4,15 @@ using InfinityMQ.Channels;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class TcpSocketReqRepDuplexChannel : ThreadedBenchmark
+    internal class NamedPipesPubSubChannel : ThreadedBenchmark
     {
         private readonly ICreateChannels channelFactory = ChannelFactory.Instance;
-        private readonly Uri endpoint = new Uri("tcp://127.0.0.1:5555");
-        private IReceiveMessages serverChannel;
-        private ISendMessages clientChannel;
+        private readonly Uri endpoint = new Uri("ipc://InfinityMQ/Benchmark/NamedPipe");
+        private ISubscribeToMessages serverChannel;
+        private IPublishMessages clientChannel;
 
-        public TcpSocketReqRepDuplexChannel()
-            : base("TCP/IP", "REQ/REP Channel")
+        public NamedPipesPubSubChannel()
+            : base("Named Pipes", "PUB/SUB Channel")
         { }
 
         protected override void Dispose(Boolean disposing)
@@ -25,14 +25,13 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void SetupClient()
         {
-            this.clientChannel = this.channelFactory.CreateSender();
+            this.clientChannel = this.channelFactory.CreatePublisher();
             this.clientChannel.Connect(endpoint);
         }
 
         protected override void SendMessages()
         {
             var bytesSent = 0;
-            var bytesReceived = 0;
             var message = new Byte[MessageSize];
             var expectedBytes = MessageSize * MessageCount;
 
@@ -41,11 +40,9 @@ namespace InfinityMQ.Performance.Benchmarks
                 this.clientChannel.Write(message, 0, MessageSize);
 
                 bytesSent += MessageSize;
-                bytesReceived += this.clientChannel.Read().Length;
             }
 
             Debug.Assert(bytesSent == expectedBytes);
-            Debug.Assert(bytesReceived == expectedBytes);
         }
 
         protected override void TeardownClient()
@@ -55,7 +52,7 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void SetupServer()
         {
-            this.serverChannel = channelFactory.CreateReceiver();
+            this.serverChannel = channelFactory.CreateSubscriber();
             this.serverChannel.Bind(endpoint);
         }
 
@@ -66,7 +63,6 @@ namespace InfinityMQ.Performance.Benchmarks
 
         protected override void ReceiveMessages()
         {
-            var bytesSent = 0;
             var bytesReceived = 0;
             var expectedBytes = MessageSize * MessageCount;
 
@@ -75,13 +71,8 @@ namespace InfinityMQ.Performance.Benchmarks
                 var message = this.serverChannel.Read();
 
                 bytesReceived += message.Length;
-
-                this.serverChannel.Write(message, 0, MessageSize);
-
-                bytesSent += MessageSize;
             }
 
-            Debug.Assert(bytesSent == expectedBytes);
             Debug.Assert(bytesReceived == expectedBytes);
         }
 

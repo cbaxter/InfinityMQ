@@ -32,7 +32,7 @@ namespace InfinityMQ.Channels.Framing.Readers
 
         public IReadFrames CreateReader()
         {
-            return new BlockingFrameReader(); //TODO: Create BufferedFrameReader.
+            return new BlockingFrameReader();  //TODO: Issue #21 - Implement BufferedFrameReader/BufferedFrameWriter.
         }
     }
 }

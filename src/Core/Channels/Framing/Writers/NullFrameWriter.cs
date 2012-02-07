@@ -8,7 +8,7 @@ namespace InfinityMQ.Channels.Framing.Writers
     {
         public void Write(Stream stream, IList<Frame> frames)
         {
-            throw new NotSupportedException(); //TODO: Add meaninful message.
+            throw new NotSupportedException(); //TODO: Issue #23 - Throw meaningful execptions.
         }
     }
 }

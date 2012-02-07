@@ -34,7 +34,7 @@ namespace InfinityMQ.Channels.Endpoints
                 case EndpointType.Tcp:
                     return new TcpEndpoint(this.frameReaderFactory.CreateReader(), this.frameWriterFactory.CreateWriter());
                 default:
-                    throw new InvalidOperationException(); //TODO: Set messsage;
+                    throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
             }
         }
     }

@@ -33,13 +33,15 @@ namespace InfinityMQ.Channels.Endpoints
             EnsureDisconnected();
 
             Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Socket.Bind(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port)); //TODO: Properly parse uri.
+            Socket.Bind(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port)); //TODO: Issue #20 - Properly parse URI for Endpoint specification.
+            Socket.ReceiveBufferSize = BufferSize.FromKilobytes(64); //TODO: Issue #18 - Option Configuration.
+            Socket.SendBufferSize = BufferSize.FromKilobytes(64); //TODO: Issue #18 - Option Configuration.
             Socket.Listen((Int32)SocketOptionName.MaxConnections);
         }
 
         public override void WaitForConnection()
         {
-            NetworkStream = new NetworkStream(Socket.Accept()); //TODO: Accept multiple connections.
+            NetworkStream = new NetworkStream(Socket.Accept()); //TODO: Issue #19 - Allow for multiple Bind/Connect calls on single channel.
         }
 
         public override void Connect(Uri uri)
@@ -47,7 +49,9 @@ namespace InfinityMQ.Channels.Endpoints
             EnsureDisconnected();
 
             Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            Socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port));//TODO: Properly parse uri.
+            Socket.Connect(new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port)); //TODO: Issue #20 - Properly parse URI for Endpoint specification.
+            Socket.ReceiveBufferSize = BufferSize.FromKilobytes(64); //TODO: Issue #18 - Option Configuration.
+            Socket.SendBufferSize = BufferSize.FromKilobytes(64); //TODO: Issue #18 - Option Configuration.
 
             NetworkStream = new NetworkStream(Socket);
         }
@@ -59,7 +63,6 @@ namespace InfinityMQ.Channels.Endpoints
             try
             {
                 Socket.Shutdown(SocketShutdown.Both);
-                Socket.Disconnect(false);
                 Socket.Dispose();
                 Socket = null;
 
@@ -68,7 +71,7 @@ namespace InfinityMQ.Channels.Endpoints
             }
             catch (Exception)
             {
-                //TODO: Proper socket shutdown.
+                //TODO: Issue #22 - Proper socket shutdown.
             }
         }
     }

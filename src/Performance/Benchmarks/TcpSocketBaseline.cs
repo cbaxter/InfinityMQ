@@ -5,15 +5,15 @@ using System.Net.Sockets;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class TcpSocketReqRepBaseline : ThreadedBenchmark
+    internal class TcpSocketBaseline : ThreadedBenchmark
     {
         private static readonly IPEndPoint EndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5555);
         private Socket serverSocket;
         private Socket clientSocket;
         private Socket channelSocket;
 
-        public TcpSocketReqRepBaseline()
-            : base("TCP/IP", "REQ/REP Baseline")
+        public TcpSocketBaseline()
+            : base("TCP/IP", "Baseline")
         { }
 
         protected override void Dispose(Boolean disposing)

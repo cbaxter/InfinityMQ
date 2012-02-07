@@ -65,13 +65,13 @@ namespace InfinityMQ.Channels.Endpoints
         protected void EnsureConnected()
         {
             if (!Connected)
-                throw new InvalidOperationException(); //TODO: Throw meaningful execption;
+                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
         }
 
         protected void EnsureDisconnected()
         {
             if (Connected)
-                throw new InvalidOperationException(); //TODO: Throw meaningful execption;
+                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
         }
     }
 }

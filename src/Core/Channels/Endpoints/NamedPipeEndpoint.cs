@@ -30,16 +30,16 @@ namespace InfinityMQ.Channels.Endpoints
         {
             EnsureDisconnected();
 
-            var serverPipeStream = new NamedPipeServerStream("PipeName", PipeDirection.InOut);
+            var serverPipeStream = new NamedPipeServerStream(uri.PathAndQuery, PipeDirection.InOut); //TODO: Issue #20 - Properly parse URI for Endpoint specification.
 
             PipeStream = serverPipeStream;
         }
 
         public override void WaitForConnection()
         {
-            var serverPipeStream = PipeStream as NamedPipeServerStream; //TODO: Dirty?
+            var serverPipeStream = PipeStream as NamedPipeServerStream;
             if(serverPipeStream == null)
-                throw new InvalidOperationException(); //TODO: Throw meaninful exception
+                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
 
             serverPipeStream.WaitForConnection();
         }
@@ -48,7 +48,7 @@ namespace InfinityMQ.Channels.Endpoints
         {
             EnsureDisconnected();
 
-            var clientPipeStream = new NamedPipeClientStream(".", "PipeName", PipeDirection.InOut);
+            var clientPipeStream = new NamedPipeClientStream(".", uri.PathAndQuery, PipeDirection.InOut); //TODO: Issue #20 - Properly parse URI for Endpoint specification.
 
             clientPipeStream.Connect();
 

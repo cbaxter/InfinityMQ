@@ -7,7 +7,7 @@ namespace InfinityMQ.Channels.Framing.Readers
     {
         public Frame Read(Stream stream)
         {
-            throw new NotSupportedException(); //TODO: Add meaninful message.
+            throw new NotSupportedException(); //TODO: Issue #23 - Throw meaningful execptions.
         }
     }
 }

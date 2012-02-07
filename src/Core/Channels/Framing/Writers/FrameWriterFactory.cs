@@ -32,7 +32,7 @@ namespace InfinityMQ.Channels.Framing.Writers
 
         public IWriteFrames CreateWriter()
         {
-            return new BlockingFrameWriter(); //TODO: Create BufferedFrameWriter.
+            return new BlockingFrameWriter(); //TODO: Issue #21 - Implement BufferedFrameReader/BufferedFrameWriter.
         }
     }
 }
