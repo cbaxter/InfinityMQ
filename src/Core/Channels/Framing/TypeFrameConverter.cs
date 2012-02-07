@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace InfinityMQ.Channels.Framing
 {
-    class NeedsANamer
+    //TODO: Will be used by ChannelBase (currently not referenced)
+    internal class TypeFrameConverter
     {
         private readonly Dictionary<Type, Frame> typeHeaders = new Dictionary<Type, Frame>();
         private readonly IDictionary<String, Type> knownTypes = new Dictionary<String, Type>();
@@ -31,7 +31,7 @@ namespace InfinityMQ.Channels.Framing
             return typeFrame;
         }
 
-        private Type GetTypeFrom(Frame frame)
+        public Type GetTypeFrom(Frame frame)
         {
             Type type;
             ArraySegment<Byte> encodedBytes = frame.Body;
