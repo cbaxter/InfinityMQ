@@ -49,20 +49,51 @@
     <Compile Include="..\Shared\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="BufferSize.cs" />
+    <Compile Include="Channels\ChannelBase.cs" />
+    <Compile Include="Channels\ChannelFactory.cs" />
+    <Compile Include="Channels\Framing\Readers\NullFrameReader.cs" />
+    <Compile Include="Channels\Framing\Writers\NullFrameWriter.cs" />
+    <Compile Include="Channels\IChannelMessages.cs" />
+    <Compile Include="Channels\IReceiveMessages.cs" />
+    <Compile Include="Channels\IPublishMessages.cs" />
+    <Compile Include="Channels\ISubscribeToMessages.cs" />
+    <Compile Include="Channels\DuplexChannel.cs" />
+    <Compile Include="Channels\Endpoints\EndpointBase.cs" />
+    <Compile Include="Channels\Endpoints\EndpointFactory.cs" />
+    <Compile Include="Channels\Endpoints\EndpointType.cs" />
+    <Compile Include="Channels\Framing\Writers\FrameWriterFactory.cs" />
+    <Compile Include="Channels\Framing\Readers\FrameReaderFactory.cs" />
+    <Compile Include="Channels\Framing\Frame.cs" />
+    <Compile Include="Channels\Framing\FrameDemultiplexer.cs" />
+    <Compile Include="Channels\Framing\FrameFlags.cs" />
+    <Compile Include="Channels\Framing\Writers\BlockingFrameWriter.cs" />
+    <Compile Include="Channels\Framing\Readers\BlockingFrameReader.cs" />
+    <Compile Include="Channels\Framing\Readers\IReadFrames.cs" />
+    <Compile Include="Channels\Framing\Writers\IWriteFrames.cs" />
+    <Compile Include="Channels\Endpoints\IEndpoint.cs" />
+    <Compile Include="Channels\Endpoints\TcpEndpoint.cs" />
+    <Compile Include="Channels\Endpoints\NamedPipeEndpoint.cs" />
+    <Compile Include="Channels\ISendMessages.cs" />
+    <Compile Include="Channels\PublisherChannel.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Channels\SubscriberChannel.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DisposableExtensions.cs" />
-    <Compile Include="Messaging\DuplexChannel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Serialization\Frame.cs" />
-    <Compile Include="Serialization\FrameDemultiplexer.cs" />
-    <Compile Include="Serialization\FrameFlags.cs" />
-    <Compile Include="Serialization\FrameReader.cs" />
-    <Compile Include="Serialization\FrameWriter.cs" />
-    <Compile Include="Serialization\Serializers\ISerializeMessages.cs" />
-    <Compile Include="Serialization\MessageReader.cs" />
-    <Compile Include="Serialization\MessageWriter.cs" />
-    <Compile Include="Serialization\Serializers\JsonDataContractSerializer.cs" />
+    <Compile Include="Serialization\XmlDataContractSerializer.cs" />
+    <Compile Include="Serialization\ISerializeMessages.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Serialization\JsonDataContractSerializer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="StringExtensions.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

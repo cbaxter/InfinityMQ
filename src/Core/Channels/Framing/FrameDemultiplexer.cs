@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace InfinityMQ.Serialization
+namespace InfinityMQ.Channels.Framing
 {
     internal class FrameDemultiplexer
     {
@@ -15,7 +15,7 @@ namespace InfinityMQ.Serialization
 
         public FrameDemultiplexer()
         {
-            this.workingBuffer = sizeBuffer;
+            this.workingBuffer = this.sizeBuffer;
         }
 
         public Frame NextFrame()

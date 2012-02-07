@@ -1,14 +1,34 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 
 namespace InfinityMQ.Performance.Benchmarks
 {
-    internal class NamedPipesReqRepBaseline : NamedPipesBenchmark
+    internal class NamedPipesBaseline : ThreadedBenchmark
     {
-        public NamedPipesReqRepBaseline()
-            : base("REQ/REP Baseline")
+        private const String ServerName = ".";
+        private const String PipeName = "InfinityMQ.Benchmark.NamedPipe";
+        protected NamedPipeClientStream ClientStream { get; private set; }
+        protected NamedPipeServerStream ServerStream { get; private set; }
+
+        public NamedPipesBaseline()
+            : base("Named Pipes", "Baseline")
         { }
+
+        protected override void Dispose(Boolean disposing)
+        {
+            base.Dispose(disposing);
+
+            ServerStream.DisposeIfSet();
+            ClientStream.DisposeIfSet();
+        }
+
+        protected override void SetupClient()
+        {
+            ClientStream = new NamedPipeClientStream(ServerName, PipeName, PipeDirection.InOut);
+            ClientStream.Connect();
+        }
 
         protected override void SendMessages()
         {
@@ -26,6 +46,21 @@ namespace InfinityMQ.Performance.Benchmarks
             Debug.Assert(bytesReceived == expectedBytes);
         }
 
+        protected override void TeardownClient()
+        {
+            ClientStream.WaitForPipeDrain();
+        }
+
+        protected override void SetupServer()
+        {
+            ServerStream = new NamedPipeServerStream(PipeName, PipeDirection.InOut);
+        }
+
+        protected override void WaitForClient()
+        {
+            ServerStream.WaitForConnection();
+        }
+
         protected override void ReceiveMessages()
         {
             Int32 bytesSent = 0;
@@ -40,6 +75,11 @@ namespace InfinityMQ.Performance.Benchmarks
 
             Debug.Assert(bytesSent == expectedBytes);
             Debug.Assert(bytesReceived == expectedBytes);
+        }
+
+        protected override void TeardownServer()
+        {
+            ServerStream.WaitForPipeDrain();
         }
 
         private Int32 WriteMessage(Stream stream)

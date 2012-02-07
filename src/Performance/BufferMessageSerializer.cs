@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using InfinityMQ.Serialization.Serializers;
+using InfinityMQ.Serialization;
 
 namespace InfinityMQ.Performance
 {
