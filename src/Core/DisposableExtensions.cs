@@ -9,5 +9,12 @@ namespace InfinityMQ
             if(disposable != null)
                 disposable.Dispose();
         }
+
+        public static void EnsureDisposed(this Object value)
+        {
+            var disposable = value as IDisposable;
+            if (disposable != null)
+                disposable.Dispose();
+        }
     }
 }
