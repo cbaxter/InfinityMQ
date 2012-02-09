@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
-using InfinityMQ.Channels.Framing;
 using InfinityMQ.Channels.Framing.Readers;
 using InfinityMQ.Channels.Framing.Writers;
 
