@@ -11,17 +11,19 @@ namespace InfinityMQ.Channels.Endpoints
     {
         private readonly IWriteFrames frameWriter;
         private readonly IReadFrames frameReader;
+        private readonly Boolean ownsFraming;
 
         protected abstract Stream Stream { get; }
         protected abstract Boolean Connected { get; }
 
-        protected EndpointBase(IReadFrames frameReader, IWriteFrames frameWriter)
+        protected EndpointBase(IReadFrames frameReader, IWriteFrames frameWriter, Boolean ownsFraming)
         {
             Verify.NotNull(frameReader, "frameReader");
             Verify.NotNull(frameWriter, "frameWriter");
 
             this.frameReader = frameReader;
             this.frameWriter = frameWriter;
+            this.ownsFraming = ownsFraming;
         }
 
         public void Dispose()
@@ -30,7 +32,11 @@ namespace InfinityMQ.Channels.Endpoints
             GC.SuppressFinalize(this);
         }
 
-        protected abstract void Dispose(Boolean disposing);
+        protected virtual void Dispose(Boolean disposing)
+        {
+            frameReader.EnsureDisposed();
+            frameWriter.EnsureDisposed();
+        }
 
         public abstract void Bind(Uri uri);
 

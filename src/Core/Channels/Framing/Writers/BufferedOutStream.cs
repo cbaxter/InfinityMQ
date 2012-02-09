@@ -30,10 +30,11 @@ namespace InfinityMQ.Channels.Framing.Writers
 
             lock (this.syncLock)
             {
-                this.timer.Change(Timeout.Infinite, Timeout.Infinite);
-                this.timer.Dispose();
-
                 WaitOnPendingFlush();
+
+                this.timer.Change(Timeout.Infinite, Timeout.Infinite);
+                this.bufferStream.Dispose();
+                this.timer.Dispose();
             }
         }
 
@@ -68,7 +69,7 @@ namespace InfinityMQ.Channels.Framing.Writers
 
                 WaitOnPendingFlush();
 
-                this.asyncResult = this.delegateStream.BeginWrite(bufferStream.GetBuffer(), 0, (Int32)Length, null, null);
+                this.asyncResult = this.delegateStream.BeginWrite(bufferStream.GetBuffer(), 0, (Int32)Length, result => WaitOnPendingFlush(), null);
 
                 bufferStream.Position = 0;
                 bufferStream.SetLength(0);
@@ -77,11 +78,14 @@ namespace InfinityMQ.Channels.Framing.Writers
 
         private void WaitOnPendingFlush()
         {
-            if (this.asyncResult == null) 
-                return;
+            lock (this.syncLock)
+            {
+                if (this.asyncResult == null)
+                    return;
 
-            this.delegateStream.EndWrite(this.asyncResult);
-            this.asyncResult = null;
+                this.delegateStream.EndWrite(this.asyncResult);
+                this.asyncResult = null;
+            }
         }
 
         public override Boolean CanRead

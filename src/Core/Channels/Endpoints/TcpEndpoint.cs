@@ -16,11 +16,17 @@ namespace InfinityMQ.Channels.Endpoints
         protected override Boolean Connected { get { return Socket != null || NetworkStream != null; } }
 
         public TcpEndpoint(IReadFrames frameReader, IWriteFrames frameWriter)
-            : base(frameReader, frameWriter)
+            : this(frameReader, frameWriter, false)
+        { }
+
+        public TcpEndpoint(IReadFrames frameReader, IWriteFrames frameWriter, Boolean ownsFraming)
+            : base(frameReader, frameWriter, ownsFraming)
         { }
 
         protected override void Dispose(Boolean disposing)
         {
+            base.Dispose(disposing);
+
             if (!disposing)
                 return;
 

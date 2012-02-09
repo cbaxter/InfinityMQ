@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace InfinityMQ.Channels.Framing.Writers
 {
-    internal class BufferedFrameWriter : IWriteFrames
+    internal class BufferedFrameWriter : IWriteFrames, IDisposable
     {
         private readonly Int32 maxBufferSize = BufferSize.FromMegabytes(1); //TODO: Make configurable (custom config section setting?)
         private volatile BufferedOutStream activeBufferStream;
@@ -19,6 +19,12 @@ namespace InfinityMQ.Channels.Framing.Writers
             this.bufferStream2 = new BufferedOutStream(maxBufferSize);
             this.frameWriter = new BlockingFrameWriter();
             this.activeBufferStream = this.bufferStream1;
+        }
+
+        public void Dispose()
+        {
+            bufferStream1.Dispose();
+            bufferStream2.Dispose(); 
         }
 
         public void Write(Stream stream, IList<Frame> frames)
