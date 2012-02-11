@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using InfinityMQ.Channels.Framing;
 using InfinityMQ.Channels.Framing.Readers;
 using InfinityMQ.Channels.Framing.Writers;
 
@@ -15,12 +14,14 @@ namespace InfinityMQ.Channels.Endpoints
         protected override Stream Stream { get { return NetworkStream; } }
         protected override Boolean Connected { get { return Socket != null || NetworkStream != null; } }
 
-        public TcpEndpoint(IReadFrames frameReader, IWriteFrames frameWriter)
-            : base(frameReader, frameWriter)
+        public TcpEndpoint(ICreateFrameReaders frameReaderFactory, ICreateFrameWriters frameWriterFactory)
+            : base(frameReaderFactory, frameWriterFactory)
         { }
 
         protected override void Dispose(Boolean disposing)
         {
+            base.Dispose(disposing);
+
             if (!disposing)
                 return;
 
@@ -42,6 +43,8 @@ namespace InfinityMQ.Channels.Endpoints
         public override void WaitForConnection()
         {
             NetworkStream = new NetworkStream(Socket.Accept()); //TODO: Issue #19 - Allow for multiple Bind/Connect calls on single channel.
+
+            InitializeFraming(NetworkStream);
         }
 
         public override void Connect(Uri uri)
@@ -54,6 +57,8 @@ namespace InfinityMQ.Channels.Endpoints
             Socket.SendBufferSize = BufferSize.FromKilobytes(64); //TODO: Issue #18 - Option Configuration.
 
             NetworkStream = new NetworkStream(Socket);
+
+            InitializeFraming(NetworkStream);
         }
 
         public override void Disconnect()

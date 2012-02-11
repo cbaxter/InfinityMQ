@@ -52,7 +52,11 @@
     <Compile Include="BufferSize.cs" />
     <Compile Include="Channels\ChannelBase.cs" />
     <Compile Include="Channels\ChannelFactory.cs" />
+    <Compile Include="Channels\Framing\Readers\FrameReaderBase.cs" />
     <Compile Include="Channels\Framing\Readers\NullFrameReader.cs" />
+    <Compile Include="Channels\Framing\Writers\BufferedFrameWriter.cs" />
+    <Compile Include="Channels\Framing\Writers\BufferedOutStream.cs" />
+    <Compile Include="Channels\Framing\Writers\FrameWriterBase.cs" />
     <Compile Include="Channels\Framing\Writers\NullFrameWriter.cs" />
     <Compile Include="Channels\IChannelMessages.cs" />
     <Compile Include="Channels\IReceiveMessages.cs" />

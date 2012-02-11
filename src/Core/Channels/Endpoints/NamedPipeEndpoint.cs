@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
-using InfinityMQ.Channels.Framing;
 using InfinityMQ.Channels.Framing.Readers;
 using InfinityMQ.Channels.Framing.Writers;
 
@@ -13,12 +12,14 @@ namespace InfinityMQ.Channels.Endpoints
         protected override Stream Stream { get { return PipeStream; } }
         protected override Boolean Connected { get { return PipeStream != null; } }
 
-        public NamedPipeEndpoint(IReadFrames frameReader, IWriteFrames frameWriter)
-            : base(frameReader, frameWriter)
+        public NamedPipeEndpoint(ICreateFrameReaders frameReaderFactory, ICreateFrameWriters frameWriterFactory)
+            : base(frameReaderFactory, frameWriterFactory)
         { }
 
         protected override void Dispose(Boolean disposing)
         {
+            base.Dispose(disposing);
+
             if (!disposing)
                 return;
 
@@ -38,10 +39,12 @@ namespace InfinityMQ.Channels.Endpoints
         public override void WaitForConnection()
         {
             var serverPipeStream = PipeStream as NamedPipeServerStream;
-            if(serverPipeStream == null)
+            if (serverPipeStream == null)
                 throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
 
             serverPipeStream.WaitForConnection();
+
+            InitializeFraming(PipeStream);
         }
 
         public override void Connect(Uri uri)
@@ -53,6 +56,8 @@ namespace InfinityMQ.Channels.Endpoints
             clientPipeStream.Connect();
 
             PipeStream = clientPipeStream;
+
+            InitializeFraming(PipeStream);
         }
 
         public override void Disconnect()

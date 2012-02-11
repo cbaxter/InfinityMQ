@@ -1,11 +1,10 @@
 ﻿using System;
-using System.IO;
 
 namespace InfinityMQ.Channels.Framing.Readers
 {
-    internal class NullFrameReader : IReadFrames
+    internal class NullFrameReader : FrameReaderBase
     {
-        public Frame Read(Stream stream)
+        public override Frame ReadFrame()
         {
             throw new NotSupportedException(); //TODO: Issue #23 - Throw meaningful execptions.
         }

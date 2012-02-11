@@ -1,39 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace InfinityMQ.Channels.Framing.Writers
 {
-    internal class BlockingFrameWriter : IWriteFrames
+    internal class BlockingFrameWriter : FrameWriterBase
     {
-        private readonly Byte[] preamble = new Byte[Frame.PreambleSize];
-        
-        public void Write(Stream stream, IList<Frame> frames)
+        private readonly Stream stream;
+
+        public BlockingFrameWriter(Stream stream)
         {
-            //TODO: Issue #11 -- Implement BufferPool (or consider WCF BufferManager?)
-            //TODO: Issue #12 -- Consider custom implementation of FrameWriter for sockets.
-            var rawMessage = new Byte[frames.Count * Frame.PreambleSize + frames.Sum(frame => frame.Body.Count)];
-            var offset = 0;
+            Verify.NotNull(stream, "stream");
 
-            foreach (var frame in frames)
-            {
-                unsafe
-                {
-                    fixed (Byte* numRef = this.preamble)
-                        *((Int32*)numRef) = sizeof(Byte) + frame.Body.Count;
+            this.stream = stream;
+        }
 
-                    this.preamble[Frame.PreambleFlagsOffset] = (Byte)frame.Flags;
-                }
-
-                Buffer.BlockCopy(this.preamble, 0, rawMessage, offset, Frame.PreambleSize);
-                offset += Frame.PreambleSize;
-
-                Buffer.BlockCopy(frame.Body.Array, frame.Body.Offset, rawMessage, offset, frame.Body.Count);
-                offset += frame.Body.Count;
-            }
-
-            stream.Write(rawMessage, 0, rawMessage.Length);
+        public override void Write(IList<Frame> frames)
+        {
+            WriteFramesToStream(frames, stream);
         }
     }
 }

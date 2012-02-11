@@ -30,9 +30,9 @@ namespace InfinityMQ.Channels.Endpoints
                 case EndpointType.InProc:
                     throw new NotSupportedException();
                 case EndpointType.Ipc:
-                    return new NamedPipeEndpoint(this.frameReaderFactory.CreateReader(), this.frameWriterFactory.CreateWriter());
+                    return new NamedPipeEndpoint(this.frameReaderFactory, this.frameWriterFactory);
                 case EndpointType.Tcp:
-                    return new TcpEndpoint(this.frameReaderFactory.CreateReader(), this.frameWriterFactory.CreateWriter());
+                    return new TcpEndpoint(this.frameReaderFactory, this.frameWriterFactory);
                 default:
                     throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
             }

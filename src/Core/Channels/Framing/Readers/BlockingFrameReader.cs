@@ -1,36 +1,22 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace InfinityMQ.Channels.Framing.Readers
 {
-    internal class BlockingFrameReader : IReadFrames
+    internal class BlockingFrameReader : FrameReaderBase
     {
-        private readonly FrameDemultiplexer frameDemultiplexer;
-        private Byte[] streamBuffer;
+        private readonly Stream stream;
 
-        public BufferSize BufferSize //TODO: Promote to interface?
+        public BlockingFrameReader(Stream stream)
         {
-            get { return this.streamBuffer.Length; }
-            set { this.streamBuffer = new Byte[value]; }
-        }
+            Verify.NotNull(stream, "stream");
 
-        public BlockingFrameReader()
-        {
-            this.frameDemultiplexer = new FrameDemultiplexer();
-            this.streamBuffer = new Byte[BufferSize.FromKilobytes(64)];
+            this.stream = stream;
         }
 
         //TODO: Issue #13 -- Consider custom implementation of FrameReader for Sockets.
-        public Frame Read(Stream stream)
+        public override Frame ReadFrame()
         {
-            while (this.frameDemultiplexer.FrameCount == 0)
-            {
-                var availableBytes = stream.Read(this.streamBuffer, 0, this.streamBuffer.Length);
-
-                this.frameDemultiplexer.Write(this.streamBuffer, 0, availableBytes);
-            }
-
-            return this.frameDemultiplexer.NextFrame();
+            return ReadFrameFromStream(this.stream);
         }
     }
 }
