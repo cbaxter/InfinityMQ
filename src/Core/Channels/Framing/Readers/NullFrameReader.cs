@@ -6,7 +6,7 @@ namespace InfinityMQ.Channels.Framing.Readers
     {
         public override Frame ReadFrame()
         {
-            throw new NotSupportedException(); //TODO: Issue #23 - Throw meaningful execptions.
+            throw new NotSupportedException(ExceptionMessages.EndpointReadNotSupported);
         }
     }
 }

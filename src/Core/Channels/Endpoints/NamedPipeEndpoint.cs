@@ -40,7 +40,7 @@ namespace InfinityMQ.Channels.Endpoints
         {
             var serverPipeStream = PipeStream as NamedPipeServerStream;
             if (serverPipeStream == null)
-                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
+                throw new NotSupportedException(ExceptionMessages.EndpointWaitForConnectionNotSupported);
 
             serverPipeStream.WaitForConnection();
 

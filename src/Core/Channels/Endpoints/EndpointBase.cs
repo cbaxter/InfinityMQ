@@ -71,13 +71,13 @@ namespace InfinityMQ.Channels.Endpoints
         protected void EnsureConnected()
         {
             if (!Connected)
-                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
+                throw new InvalidOperationException(ExceptionMessages.EndpointDisconnected);
         }
 
         protected void EnsureDisconnected()
         {
             if (Connected)
-                throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
+                throw new InvalidOperationException(ExceptionMessages.EndpointConnected);
         }
 
         //HACK:  Issue #19 - Allow for multiple Bind/Connect calls on single channel.

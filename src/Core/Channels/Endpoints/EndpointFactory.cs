@@ -28,13 +28,13 @@ namespace InfinityMQ.Channels.Endpoints
             switch (type)
             {
                 case EndpointType.InProc:
-                    throw new NotSupportedException();
+                    throw new NotImplementedException();
                 case EndpointType.Ipc:
                     return new NamedPipeEndpoint(this.frameReaderFactory, this.frameWriterFactory);
                 case EndpointType.Tcp:
                     return new TcpEndpoint(this.frameReaderFactory, this.frameWriterFactory);
                 default:
-                    throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
+                    throw new NotSupportedException(ExceptionMessages.EndpointUnknownType);
             }
         }
     }
