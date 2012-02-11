@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
 
 namespace InfinityMQ.Channels.Framing.Writers
 {
-    internal interface IWriteFrames
+    internal interface IWriteFrames : IDisposable
     {
-        void Write(Stream stream, IList<Frame> frames);
+        void Write(IList<Frame> frames);
     }
 }

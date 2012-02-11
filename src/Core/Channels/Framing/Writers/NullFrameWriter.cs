@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace InfinityMQ.Channels.Framing.Writers
 {
-    internal class NullFrameWriter : IWriteFrames
+    internal class NullFrameWriter : FrameWriterBase
     {
-        public void Write(Stream stream, IList<Frame> frames)
+        public override void Write(IList<Frame> frames)
         {
             throw new NotSupportedException(); //TODO: Issue #23 - Throw meaningful execptions.
         }

@@ -9,21 +9,21 @@ namespace InfinityMQ.Channels.Endpoints
 {
     internal abstract class EndpointBase : IEndpoint
     {
-        private readonly IWriteFrames frameWriter;
-        private readonly IReadFrames frameReader;
-        private readonly Boolean ownsFraming;
+        private readonly ICreateFrameReaders frameReaderFactory;
+        private readonly ICreateFrameWriters frameWriterFactory;
+        private IWriteFrames frameWriter;
+        private IReadFrames frameReader;
 
         protected abstract Stream Stream { get; }
         protected abstract Boolean Connected { get; }
 
-        protected EndpointBase(IReadFrames frameReader, IWriteFrames frameWriter, Boolean ownsFraming)
+        protected EndpointBase(ICreateFrameReaders frameReaderFactory, ICreateFrameWriters frameWriterFactory)
         {
-            Verify.NotNull(frameReader, "frameReader");
-            Verify.NotNull(frameWriter, "frameWriter");
+            Verify.NotNull(frameReaderFactory, "frameReaderFactory");
+            Verify.NotNull(frameWriterFactory, "frameWriterFactory");
 
-            this.frameReader = frameReader;
-            this.frameWriter = frameWriter;
-            this.ownsFraming = ownsFraming;
+            this.frameReaderFactory = frameReaderFactory;
+            this.frameWriterFactory = frameWriterFactory;
         }
 
         public void Dispose()
@@ -34,8 +34,8 @@ namespace InfinityMQ.Channels.Endpoints
 
         protected virtual void Dispose(Boolean disposing)
         {
-            frameReader.EnsureDisposed();
-            frameWriter.EnsureDisposed();
+            frameReader.DisposeIfSet();
+            frameWriter.DisposeIfSet();
         }
 
         public abstract void Bind(Uri uri);
@@ -50,7 +50,7 @@ namespace InfinityMQ.Channels.Endpoints
         {
             EnsureConnected();
 
-            this.frameWriter.Write(Stream, frames);
+            this.frameWriter.Write(frames);
         }
 
         public IEnumerable<Frame> Receive() //TODO: Consider returning `Message` class that is IEnumerable<Frame> but exposes Type property that finds TypeFrame if exists?
@@ -62,7 +62,7 @@ namespace InfinityMQ.Channels.Endpoints
             
             do
             {
-                frames.Add(frame = this.frameReader.Read(Stream));
+                frames.Add(frame = this.frameReader.ReadFrame());
             } while ((frame.Flags & FrameFlags.More) == FrameFlags.More);
 
             return frames;
@@ -78,6 +78,16 @@ namespace InfinityMQ.Channels.Endpoints
         {
             if (Connected)
                 throw new InvalidOperationException(); //TODO: Issue #23 - Throw meaningful execptions.
+        }
+
+        //HACK:  Issue #19 - Allow for multiple Bind/Connect calls on single channel.
+        //       Need to support concept of EndpointConnection for TcpEndpoints; short-term
+        //       solution implemented to allow for completion of buffer implementations.
+        //       Likely should differentiate between Endpoint Acceptors and Endpoint Connections?
+        protected void InitializeFraming(Stream stream)
+        {
+            frameReader = this.frameReaderFactory.CreateReader(stream);
+            frameWriter = this.frameWriterFactory.CreateWriter(stream);
         }
     }
 }

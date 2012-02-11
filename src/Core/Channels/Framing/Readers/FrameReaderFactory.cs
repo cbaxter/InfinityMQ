@@ -1,18 +1,20 @@
 ﻿
+using System.IO;
+
 namespace InfinityMQ.Channels.Framing.Readers
 {
     internal interface ICreateFrameReaders
     {
-        IReadFrames CreateReader();
+        IReadFrames CreateReader(Stream stream);
     }
 
     internal class DefaultFrameReaderFactory : ICreateFrameReaders
     {
         public static readonly ICreateFrameReaders Instance = new DefaultFrameReaderFactory();
 
-        public IReadFrames CreateReader()
+        public IReadFrames CreateReader(Stream stream)
         {
-            return new BlockingFrameReader();
+            return new BlockingFrameReader(stream);
         }
     }
 
@@ -20,7 +22,7 @@ namespace InfinityMQ.Channels.Framing.Readers
     {
         public static readonly ICreateFrameReaders Instance = new NullFrameReaderFactory();
 
-        public IReadFrames CreateReader()
+        public IReadFrames CreateReader(Stream stream)
         {
             return new NullFrameReader();
         }
@@ -30,9 +32,9 @@ namespace InfinityMQ.Channels.Framing.Readers
     {
         public static readonly ICreateFrameReaders Instance = new BufferedFrameReaderFactory();
 
-        public IReadFrames CreateReader()
+        public IReadFrames CreateReader(Stream stream)
         {
-            return new BlockingFrameReader();  //TODO: Issue #21 - Implement BufferedFrameReader/BufferedFrameWriter.
+            return new BlockingFrameReader(stream);
         }
     }
 }

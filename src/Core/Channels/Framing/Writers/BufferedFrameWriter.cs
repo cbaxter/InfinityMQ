@@ -5,32 +5,33 @@ using System.Linq;
 
 namespace InfinityMQ.Channels.Framing.Writers
 {
-    internal class BufferedFrameWriter : IWriteFrames, IDisposable
+    internal class BufferedFrameWriter : FrameWriterBase
     {
         private readonly Int32 maxBufferSize = BufferSize.FromMegabytes(1); //TODO: Make configurable (custom config section setting?)
         private volatile BufferedOutStream activeBufferStream;
         private readonly BufferedOutStream bufferStream1;
         private readonly BufferedOutStream bufferStream2;
-        private readonly IWriteFrames frameWriter;
 
-        public BufferedFrameWriter()
+        public BufferedFrameWriter(Stream stream)
         {
-            this.bufferStream1 = new BufferedOutStream(maxBufferSize);
-            this.bufferStream2 = new BufferedOutStream(maxBufferSize);
-            this.frameWriter = new BlockingFrameWriter();
+            Verify.NotNull(stream, "stream");
+
+            this.bufferStream1 = new BufferedOutStream(stream, maxBufferSize);
+            this.bufferStream2 = new BufferedOutStream(stream, maxBufferSize);
             this.activeBufferStream = this.bufferStream1;
         }
 
-        public void Dispose()
+        protected override void Dispose(Boolean disposing)
         {
+            if (!disposing)
+                return;
+
             bufferStream1.Dispose();
             bufferStream2.Dispose(); 
         }
 
-        public void Write(Stream stream, IList<Frame> frames)
+        public override void Write(IList<Frame> frames)
         {
-            this.activeBufferStream.EnsureDelegateStream(stream);
-
             var totalBytes = frames.Sum(frame => frame.Body.Count);
             if (this.activeBufferStream.Length + totalBytes >= this.maxBufferSize)
             {
@@ -38,7 +39,7 @@ namespace InfinityMQ.Channels.Framing.Writers
                 this.activeBufferStream = ReferenceEquals(this.activeBufferStream, this.bufferStream1) ? this.bufferStream2 : this.bufferStream1;
             }
 
-            this.frameWriter.Write(this.activeBufferStream, frames);
+            WriteFramesToStream(frames, this.activeBufferStream);
         }
     }
 }

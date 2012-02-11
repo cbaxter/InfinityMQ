@@ -1,9 +1,9 @@
-﻿using System.IO;
+﻿using System;
 
 namespace InfinityMQ.Channels.Framing.Readers
 {
-    internal interface IReadFrames
+    internal interface IReadFrames : IDisposable
     {
-        Frame Read(Stream stream);
+        Frame ReadFrame();
     }
 }

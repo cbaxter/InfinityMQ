@@ -10,11 +10,14 @@ namespace InfinityMQ.Channels.Framing.Writers
         private readonly BufferSize bufferSize;
         private readonly Object syncLock;
         private readonly Timer timer;
-        private Stream delegateStream;
+        private Stream stream;
         private IAsyncResult asyncResult;
 
-        public BufferedOutStream(BufferSize bufferSize)
+        public BufferedOutStream(Stream stream, BufferSize bufferSize)
         {
+            Verify.NotNull(stream, "stream");
+
+            this.stream = stream;
             this.syncLock = new Object();
             this.bufferSize = bufferSize;
             this.bufferStream = new MemoryStream(bufferSize);
@@ -35,15 +38,6 @@ namespace InfinityMQ.Channels.Framing.Writers
                 this.timer.Change(Timeout.Infinite, Timeout.Infinite);
                 this.bufferStream.Dispose();
                 this.timer.Dispose();
-            }
-        }
-
-        public void EnsureDelegateStream(Stream stream)
-        {
-            lock (this.syncLock)
-            {
-                if (!ReferenceEquals(this.delegateStream, stream))
-                    this.delegateStream = stream;
             }
         }
 
@@ -69,7 +63,7 @@ namespace InfinityMQ.Channels.Framing.Writers
 
                 WaitOnPendingFlush();
 
-                this.asyncResult = this.delegateStream.BeginWrite(bufferStream.GetBuffer(), 0, (Int32)Length, result => WaitOnPendingFlush(), null);
+                this.asyncResult = this.stream.BeginWrite(bufferStream.GetBuffer(), 0, (Int32)Length, result => WaitOnPendingFlush(), null);
 
                 bufferStream.Position = 0;
                 bufferStream.SetLength(0);
@@ -83,7 +77,7 @@ namespace InfinityMQ.Channels.Framing.Writers
                 if (this.asyncResult == null)
                     return;
 
-                this.delegateStream.EndWrite(this.asyncResult);
+                this.stream.EndWrite(this.asyncResult);
                 this.asyncResult = null;
             }
         }
